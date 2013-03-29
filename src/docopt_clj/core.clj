@@ -2,11 +2,8 @@
   (:require [clojure.string :as s])
   (:require [clojure.set :as set])
   (:use     [slingshot.slingshot :only [throw+ try+]]))
-            
 
-(defmacro err [err-clause type & err-strs]
-  `(when ~err-clause
-     (throw+ {:type ~type :msg (str ~@err-strs)})))
+;;;; helpers
 
 (defmacro defmultimethods [method-name args dispatch-fn-body & body]
   {:pre [(even? (count body)) (vector? args)]}
@@ -19,9 +16,20 @@
   `(do ~@(mapcat (fn [[parent children]]
                    (map (fn [child] `(derive ~child ~parent)) children))
                  m)))
-  
-(defn find-repeated [seq] 
-  (ffirst (filter #(< 1 (val %)) (frequencies seq))))
+
+;;
+
+(defmacro err [err-clause type & err-strs]
+  `(when ~err-clause
+     (throw+ {:type ~type :msg (str ~@err-strs)})))
+
+(specialize {::error [::syntax ::parse]})
+
+(defmultimethods err-print [{:keys [type msg]}]
+  type
+  ::error  (str "ERROR | " msg)
+  ::syntax (str "ERROR (syntax) | " msg)
+  ::parse  (str "ERROR (parse) | " msg))
 
 
 ;;;; tokenization
@@ -49,16 +57,20 @@
 
 (defn parse-option-key [option-key ]
   (tokenize-string (or option-key "")
-                   [[#"<[^<>]*>" :arg]
+                   [[#"(<[^<>]*>)" :arg]
                     [#"(?:=|,|\s+)" nil]
                     [(re-tok re-arg-str) :arg]
                     [(re-tok "--(\\S+)") :long]
                     [(re-tok "-(\\S+)")  :short]]))
 
+(defn parse-default-values [option-description]
+  (let [[default-string] (map second (re-seq #"\[(?i)default:\s*([^\]]*)\]" (or option-description "")))]
+    (into [] (filter seq (s/split (or default-string "") #"\s+")))))
+
 (defn parse-option-line [option-line]
   (let [[option-key option-description] (s/split option-line #"\s{2,}" 2)
         tokens (parse-option-key option-key)
-        default-values (filter seq (s/split (or (second (re-matches #"\[(?i)default:\s*([^\]]*)\]" (or option-description ""))) "") #"\s+"))]
+        default-values (parse-default-values option-description)]
     (err (seq (filter string? tokens)) ::syntax
          "Badly-formed option definition in '" option-key "'")
     (let [{:keys [short long arg] :as option} (reduce conj {} tokens)]
@@ -71,17 +83,22 @@
 (defn option-string [{:keys [short long]}]
   (if long (str "--" long) (str "-" short)))
 
+(defn find-repeated [seq] 
+  (ffirst (filter #(< 1 (val %)) (frequencies seq))))
+
 (defn parse-options-block [options-block]
-  (let [options (map (comp parse-option-line second) (re-seq #"(?:^|\n)\s*(-.*)" (or options-block "")))
+  (let [reducefn #(if (= \- (first %2)) (conj %1 %2) (conj (pop %1) (str (peek %1) %2)))
+        options (map parse-option-line (rest (reduce reducefn [] (map s/trim (s/split-lines (str "-\n" options-block))))))
         redefined (or (find-repeated (filter identity (map :short options)))
                       (find-repeated (filter identity (map :long options))))]
     (err redefined ::syntax
-         "In options descriptions, multiple definitions of option '" (option-string redefined) "'.")
+         "In options descriptions, multiple definitions of option '" (option-string redefined) "'.")    
     (into #{} options)))
 
 
 ;;;; parse usage lines into token seq
-;; all tokens are of the form [tag & more] before expansion and [tag line-number & more] after expansion, where tag derives from ::token
+;; all tokens are of the form [tag & more] before expansion and [tag line-number & more] after expansion,
+;; where tag derives from ::token
 
 (specialize {::token     [::repeat ::options ::option ::word ::group ::choice]
              ::group     [::optional ::required]
@@ -93,8 +110,10 @@
 
 (defn arg-option-pairs [options]
   (let [options (filter :takes-arg options)]
-    (concat (zipmap (map #(re-tok "--(" % ")(?:=| )(\\S+)")      (map :long  (filter :long options)))  (repeat ::long))
-            (zipmap (map #(re-tok "-([^- " % "]*" % ") (\\S+)")  (map :short (filter :short options))) (repeat ::short)))))
+    (concat (zipmap (map #(re-tok "--(" % ")(?:=| )(\\S+)") (map #(or (:long-re %) (:long %)) (filter :long  options)))  
+                    (repeat ::long))
+            (zipmap (map #(re-tok "-([^- " % "]*" % ") ?(\\S+)") (map :short (filter :short options))) 
+                    (repeat ::short)))))
 
 (defn parse-usage-line [usage-line options]
   (tokenize-string 
@@ -109,18 +128,20 @@
              [#"\[" ::optional]
              [#"\]" ::end-optional]]
             (arg-option-pairs options)
-            [[(re-tok "--([^= ]+)(?:=" re-arg-str ")?") ::long]                   
+            [[(re-tok "--([^= ]+)=(<[^<>]*>|\\S+)") ::long]
+             [(re-tok "--(\\S+)") ::long]
              [(re-tok "-(\\S+)") ::short]
              [(re-tok re-arg-str) ::argument]
              [(re-tok "(\\S+)") ::command]])))
-
-(defn find-option [[tag name arg] line-number options]  
-  (let [type (case tag ::short :short ::long :long)
-        takes-arg (not (empty? arg))
-        [option] (filter #(= name (% type)) options)]
+  
+(defn find-option [name-key name arg lnum options]
+  (let [takes-arg (not (empty? arg))
+        [option] (filter #(= name (% name-key)) options)]
     (err (and option (not= takes-arg (:takes-arg option))) ::parse
-         "Usage line " line-number type " option '" name "' already defined " (if takes-arg "without" "with") " argument.")
-    [::option line-number (or option {type name :takes-arg takes-arg})]))
+         "Usage line " lnum ": " (if (= name-key :short) "short" "long") " option '" (option name-key) 
+         "'already defined with" (if takes-arg "out") " argument.")
+    [::option lnum (or option {name-key name :takes-arg takes-arg})]))
+
 
 (defmultimethods usage-token-expand 
   [[tag name arg :as token] line-number block-options] 
@@ -129,9 +150,11 @@
   ::word      [[tag line-number name]]
   ::stdin     [[::optional line-number] [::command line-number "-"]  [::end-optional line-number]]
   ::separator [[::optional line-number] [::command line-number "--"] [::end-optional line-number]]
-  ::long      [(find-option token line-number block-options)]
-  ::options   (concat [[::optional line-number]] (map #(vector ::option line-number %) block-options) [[::end-optional line-number]])
-  ::short     (letfn [(new-short [arg c] (find-option [::short (str c) arg] line-number block-options))]
+  ::long      [(find-option :long name arg line-number block-options)]
+  ::options   (concat [[::optional line-number]] 
+                      (map #(vector ::option line-number %) block-options) 
+                      [[::end-optional line-number]])
+  ::short     (letfn [(new-short [arg c] (find-option :short (str c) arg line-number block-options))]
                 (conj (into [] (map (partial new-short nil) (butlast name)))
                       (new-short arg (last name)))))
 
@@ -154,38 +177,55 @@
 (defn pop-last [stack]
   (conj (pop stack) (conj (pop (peek stack)) (pop (peek (peek stack))))))
 
+(defn make-choices [group-type children]
+  (letfn [(tfn [[[head-tag] & more :as group-body]]
+               (and (seq group-body)
+                    (or (seq more)                                          
+                        (not= head-tag group-type))))
+          (mfn [group-body]
+               (if (tfn group-body)
+                 (into [group-type] group-body)
+                 (first group-body)))
+          (rfn [choices child]
+               (if (seq (filter #(= % child) choices))
+                 choices
+                 (conj choices child)))]
+    (reduce rfn [] (map mfn children))))
+
 (specialize {::group-end [::end-optional ::end-required]})
 
 (defmultimethods token-tree
   [stack [tag line-number data]]
   tag
   ::group     (conj stack [tag []])
-  ::token     (push-last stack (conj [tag] data))     
+  ::word      (push-last stack (conj [tag] data))
   ::repeat    (push-last (pop-last stack) [tag (peek-last stack)])                
   ::choice    (conj (pop stack) (conj (peek stack) []))
-  ::group-end (let [[group-type & children :as group] (peek stack)]
-                (err (not (isa? tag group-type)) ::parse 
-                     "Bad '" (if (= tag ::end-optional) \] \)) "' in line " line-number ".")
-                (if (seq children)
-                  (let [choices (map #(into [group-type] %) children)]
-                    (push-last (pop stack) (if (seq (rest choices))
-                                             (into [::choice] choices)
-                                             (first choices))))
-                  (pop stack))))
+  ::group-end (let [[group-type & children :as group]   (peek stack)                    
+                    [choice & more-choices :as choices] (make-choices group-type children)]
+                (err (not (isa? tag group-type)) ::parse
+                     "Bad '" (if (= tag ::end-optional) \] \)) "'" (if (number? line-number) (str " in line " line-number)) ".")
+                (if (seq more-choices) 
+                  (push-last (pop stack) (into [::choice] choices))
+                  (let [[head & [middle & tail :as more]] choice]
+                    (if (seq more)  
+                      (push-last (pop stack) (if (and (= head ::required) (empty? tail)) middle choice))
+                      (pop stack))))))
 
 (prefer-method token-tree ::group-end ::group)
              
 (defn parse-usage-pattern [tokens]
-  (let [[tree & more] (reduce token-tree [nil] (concat [[:required]] tokens [[:end-required]]))]
+  (let [[tree & more :as stack] (reduce token-tree [[[]]] (concat [[::required]] tokens [[::end-required]]))]
     (err (seq more) ::parse "Missing ')' or ']'.")
-    tree))
-
+    (or (peek-last stack) []))) 
 
 ;;;; parse & accumulate usage variables
+  
 
 (defn parse-usage-variables [tokens]
   (let [token-groups (group-by first tokens)
-        options (group-by last (token-groups ::option))]
+        options (group-by last (token-groups ::option))
+        long-names (filter identity (map :long options))] 
     (doseq [o (keys options)]
       (let [alt-o (assoc o :takes-arg (not (:takes-arg o)))
             linefn #(s/join ", " (sort (into #{} (map second (options %)))))]
@@ -200,6 +240,7 @@
 (defmultimethods occurs
   [element [type & [data & _ :as children] :as node]]
   type
+  nil      0
   ::token  (if (= data element) 1 0)
   ::repeat (* 2 (occurs element data))
   ::group  (reduce + 0 (map (partial occurs element) children))
@@ -220,6 +261,14 @@
          (count usage-split) " occurences of the 'usage:' keyword, 1 expected.")
     (s/split (second usage-split) #"\n\s*\n" 2)))
 
+(defn option-re [name names]
+  (loop [n 1] 
+    (if (= n (count name))
+      name
+      (if (seq (rest (filter #(= (subs name 0 n) (subs % 0 n)) (filter #(<= n (count %)) names))))
+        (recur (inc n))
+        (str (subs name 0 n) (s/replace (subs name n) #"(.)" "$1?"))))))  
+
 (defn parse-doc [doc]
   (let [[usage-block options-block] (split-doc-blocks doc)]
     (err (= "" usage-block) ::syntax
@@ -228,25 +277,32 @@
           prog-names     (map first usage-lines)]
       (err (apply not= prog-names) ::parse
            "Inconsistent program name in usage patterns: " (s/join ", " (keys (group-by identity prog-names))) ".")
-      (let [tokens    (parse-usage-syntax (map second usage-lines)  (parse-options-block options-block))
-            tree      (parse-usage-pattern tokens)]
-        {:name    (first prog-names)
-         :pattern tree
-         :acc     (accumulator tree (parse-usage-variables tokens))}))))
-
-(parse-doc "usage: foo --arc\nfoo -aa\n\n--arc,-a")
+      (let [tokens     (parse-usage-syntax (map second usage-lines) (parse-options-block options-block))
+            variables  (parse-usage-variables tokens)
+            long-names (filter identity (map :long (::option variables))) 
+            tree       (parse-usage-pattern tokens)]
+        {:name       (first prog-names)
+         :pattern    tree
+         :options    (map #(if (:long %) (assoc % :long-re (option-re (:long %) long-names)) %) (::option variables))
+         :acc        (accumulator tree variables)}))))
 
 ;;;; parse command line
 
 (defmultimethods command-token-expand 
-  [[tag name arg :as token]] 
+  [[tag name arg :as token] options] 
   tag
   ::token     [token]
-  ::short     (conj (into [] (map #(vector ::short (str %)) (butlast name)))
-                    [::short (str (last name)) arg]))
+  ::long      (let [[option] (filter #(re-find (re-pattern (str "^" (:long-re %) "$")) name) options)]
+                [[::option (or option name) arg]])
+  ::short     (let [options (map (fn [name]
+                                   (let [[option] (filter #(= name (:short %)) options)]
+                                     (or option name)))
+                                 (map str name))]
+                  (concat (map #(vector ::option %) (butlast options))
+                          [[::option (last options) arg]])))
 
 (defn tokenize-command-line [line options]
-  (mapcat command-token-expand 
+  (mapcat #(command-token-expand % options)  
           (tokenize-string line 
                            (concat (arg-option-pairs options)
                                    [[(re-tok "(--?)") ::word]
@@ -254,79 +310,89 @@
                                     [(re-tok "-(\\S+)") ::short]
                                     [(re-tok "(\\S+)") ::word]]))))
 
-(defmultimethods command-token-parse
-  [acc [tag option arg]] 
-  tag
-  ::token     acc
-  ::long      (command-token-parse acc [::option (first (filter #(= option (:long %))  (keys acc))) arg])
-  ::short     (command-token-parse acc [::option (first (filter #(= option (:short %)) (keys acc))) arg])
-  ::option    (when (and option (= (not (nil? arg)) (:takes-arg option)))
-                (push-acc acc option arg)))
-
 ;; match
 
 (defn push-acc [acc k v]
-  (if-let [to-val (acc k)]
-    (if (nil? v)
+  (if-let [k ((into #{} (keys acc)) k)]
+    (let [to-val (acc k)]
       (cond 
-        (number? to-val) (assoc acc k (inc to-val))
-        (= false to-val) (assoc acc k true))
-      (cond
-        (vector? to-val) (assoc acc k (conj to-val v))
-        (= nil to-val)   (assoc acc k v)))))
+        (number? to-val) (if (nil? v) (assoc acc k (inc to-val)))
+        (= false to-val) (if (nil? v) (assoc acc k true))
+        (vector? to-val) (if (not (nil? v)) (assoc acc k (conj to-val v)))
+        (nil? to-val)    (if (not (nil? v)) (assoc acc k v))))))
 
-(defn peek-acc [acc k]
-  (if (vector? (acc k))
-    (first (acc k))
-    (acc k)))
+(defn option-move [o to from]
+  (let [fv (from o)
+        from (dissoc from o)]
+    (case fv 
+      ([] 0 false nil) nil
+      (cond 
+        (vector? fv)           [(push-acc to o (first fv)) (if (seq (rest fv)) (assoc from o (into [] (rest fv))) from)]
+        (number? fv)           [(push-acc to o nil)        (if (< 0 (dec fv))  (assoc from o (dec fv))            from)]
+        (= true fv)            [(push-acc to o nil)        from]
+        true                   [(push-acc to o fv)         from]))))
 
-(defn pop-acc [acc k]
-  (let [val (acc k)]
-    (if (and (vector? val) (seq (rest val)))
-      (assoc acc k (into [] (rest val)))
-      (dissoc acc k))))
-
-(defmultimethods consume [data [acc remaining [[tag name :as word] & more-words :as cmdseq] :as state]]
-  tag
-  ::argument [(push-acc acc name data) remaining more-words]
-  ::command  (if (= data name) 
-               [(push-acc acc name) remaining more-words])
-  ::option   (if-let [value (peek-acc remaining data)]
-               [(push-acc acc data value) (pop-acc remaining data) cmdseq])
-    
-(defmultimethods collect-states [states [type & [data & _ :as children] :as pattern]]
+(defmultimethods consume [[type key :as pattern] [acc remaining [word & more-words :as cmdseq] :as state]]
   type
-  ::word     (into #{} (filter identity (map (partial consume data) states)))
-  ::choice   (apply set/union (map (partial match states) children))
-  ::optional (reduce #(into %1 (match %1 %2)) clojure.set/union states children)
-  ::required (reduce match states children)
-  ::repeat   (let [new-states (match states data)]
-               (if (empty? new-states)
-                 #{}
-                 (into new-states (match new-states pattern)))))
-  
+  ::argument (if-let [new-acc (push-acc acc key word)]
+               [new-acc remaining more-words])
+  ::command  (if (= key word)
+               (if-let [new-acc (push-acc acc key nil)]
+                 [new-acc remaining more-words]))
+  ::option   (let [[to from] (option-move key acc remaining)]
+               (if (and to from) 
+                 [to from cmdseq])))
+    
+(defmultimethods matches [states [type & children :as pattern]]
+  type
+  nil        states
+  ::token    (into #{} (filter identity (map (partial consume pattern) states)))
+  ::choice   (apply set/union (map (partial matches states) children))
+  ::optional (reduce #(into %1 (matches %1 %2)) states children)
+  ::required (reduce matches states children)
+  ::repeat   (let [new-states (matches states (first children))]
+               (if (= states new-states)
+                 states                 
+                 (into new-states (matches new-states pattern)))))
 
 ;;
-  
-(defn parse-command-line [{:keys [acc pattern]} argv]
-  (let [options-acc (into {} (filter (comp not string? key) acc))
-        tokens      (tokenize-command-line (s/join " " argv) (keys options-acc))
-        remaining   (reduce command-token-parse options-acc tokens)]
+
+(defn accumulate-option-arg [acc [_ option arg]]
+  (if (and acc (not (string? option))
+           (= (:takes-arg option) (not (nil? arg))))
+    (push-acc acc (dissoc option :long-re) arg)))
+
+(defn  accumulate-option-default [acc [option val]]
+  (let [default (:default-value option)
+        new-acc (if (and acc (:takes-arg option) (or (nil? val) (= [] val)))
+                  (assoc acc option (if (and default (= [] val) (not (vector? default))) [default] default))
+                  acc)]
+    (case (new-acc option)
+      (0 [] false nil) (dissoc new-acc option)
+      new-acc)))
+
+(defn parse-command-line [{:keys [acc pattern options]} argv]
+  (let [options-acc    (into {} (filter (comp not string? key) acc))
+        [before after] (s/split (or (s/join " " argv) "") #" -- ") 
+        tokens         (concat (tokenize-command-line (or before "") options) 
+                               (map #(vector ::word %) (if (seq after) (s/split after " ")))) 
+        options-acc    (reduce accumulate-option-arg     options-acc (filter #(isa? (first %) ::option) tokens))
+        remaining      (reduce accumulate-option-default options-acc options-acc)]
     (when remaining
-      (match [acc remaining (map second (filter #(isa? (first %) ::word) tokens))] pattern))))
-
-
- (parse-command-line ["bar" "-a"] (:acc (parse-doc "usage: foo bar (--arc | -aa)\n\n--arc,-a")))
-
-
-
+      (let [all-matches (matches #{[acc remaining (map second (filter #(isa? (first %) ::word) tokens))]} pattern)
+            match (ffirst (filter #(and (empty? (% 1)) (empty? (% 2))) all-matches))]
+        (when match
+          (into {} (map #(if (string? (key %)) % (vector (option-string (key %)) (val %))) match)))))))
 
 ;;;;
 
-(defn parsefn [doc & options]
-  (let [{:keys [name options pattern] :as parsed-doc} (parse-doc doc)]  
-    (fn [argv]
-      parsed-doc)))
-      
+(defn parsefn [doc]
+  (let [parsed-doc (try+ (parse-doc doc)
+                     (catch [:type ::error] error
+                       (err-print error)))]
+    (if (string? parsed-doc)
+      (constantly nil)
+      (fn [argv]
+        (parse-command-line parsed-doc argv)))))
 
 

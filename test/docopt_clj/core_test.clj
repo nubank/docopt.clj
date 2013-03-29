@@ -23,36 +23,23 @@
         tests       #"((?:.+\n)*)"]
     (re-concat input-begin input-body separator tests)))
 
-(defn- make-argv [args]
-  (let [args (s/trim args)]
-    (into ["prog"]
-          (when (not= "" args)
-            (s/split args #"\s+")))))
-
 (defn load-test-cases [path] 
-  (apply merge-with merge 
-         (map (fn [[_ doc tests]]
-                {doc (into {} (map (fn [[_ args result]]
-                                     [(make-argv args) (json/read-str result)])
-                                   (re-seq test-block-regex tests)))})
-              (re-seq doc-block-regex 
-                      (s/replace (slurp path) #"#.*" "")))))
+  (into (array-map) 
+        (map (fn [[_ doc tests]]
+               [doc (into (array-map) 
+                          (map (fn [[_ args result]]
+                                 [(filter seq (s/split (or args "") #"\s+")) (json/read-str result)])
+                               (re-seq test-block-regex tests)))])
+             (re-seq doc-block-regex 
+                     (s/replace (slurp path) #"#.*" "")))))
 
-(def test-cases (load-test-cases "testcases.docopt"))
-
-(eval `(deftest doc-specs  
-         ~@(map (fn [doc] 
-                  `(is (function? (docopt-clj.core/parsefn ~doc))))
-                (keys test-cases))))
-
-#_(eval `(deftest results-match
-         ~@(mapcat (fn [[doc tests]]
-                     (map (fn [[argv expected-result]]
-                            `(is (= ~expected-result ((docopt-clj.core/parsefn ~doc) ~argv))))
-                          tests))
-                   test-cases)))
-     
-
-(run-tests 'docopt-clj.core-test)
+(doseq [[doc tests] (load-test-cases "testcases.docopt")]  
+  (let [parser (docopt-clj.core/parsefn doc)]
+    (doseq [[in out] tests]     
+      (let [test (str "\n" (s/trim-newline doc) "\n$ prog " (s/join " " in) "\nexpected: " out)
+            result (or (parser in) "user-error")]
+        (when (not= result out)
+          (println (str test "\nobtained: " result "\n")))))))
+  
 
 
