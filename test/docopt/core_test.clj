@@ -50,4 +50,3 @@
 
 (deftest docopt
   (is (valid? "testcases.docopt")))
-

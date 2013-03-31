@@ -64,10 +64,11 @@
 (defn option-move
   "Returns accumulators '[to from]' with option 'o' moved from 'from' to 'to', or nil in case of failure."
   [o to from]
-  (let [fv (from o)
+  (let [fv (from o)  
         from (dissoc from o)]
     (case fv 
-      ([] 0 false nil) nil
+      ([] 0 false nil)         (if (and (:takes-arg o) (:default-value o))
+                                 [to from])
       (cond 
         (vector? fv)           [(push-acc to o (first fv)) (if (seq (rest fv)) (assoc from o (into [] (rest fv))) from)]
         (number? fv)           [(push-acc to o nil)        (if (< 0 (dec fv))  (assoc from o (dec fv))            from)]
@@ -103,35 +104,34 @@
 
 ;;
 
-(defn accumulate-option-arg 
-  [acc [_ option arg]]
+(defn accumulate-options [acc [_ option arg]]
   (if (and acc (not (string? option))
            (= (:takes-arg option) (not (nil? arg))))
-    (push-acc acc (dissoc option :long-re) arg)))
+    (push-acc acc option arg)))
 
-(defn  accumulate-option-default 
-  [acc [option val]]
-  (let [default (:default-value option)
-        new-acc (if (and acc (:takes-arg option) (or (nil? val) (= [] val)))
-                  (assoc acc option (if (and default (= [] val) (not (vector? default))) [default] default))
-                  acc)]
-    (case (new-acc option)
-      (0 [] false nil) (dissoc new-acc option)
-      new-acc)))
+(defn present-result [pair]
+  (if (string? (key pair))
+    pair
+    (let [[option value] pair
+          default (:default-value option)]
+      [(option->string option) 
+       (cond
+         (nil? value) default       
+         (= [] value) (if (vector? default) default [default])
+         true         value)])))
 
 (defn match-argv 
   "Match command-line arguments with usage patterns."
   [{:keys [acc tree]} argv]
   (let [options        (remove string? (keys acc))
-        options-acc    (into {} (filter (comp not string? key) acc))
         args           (s/join " " (filter seq (if (string? argv) (s/split argv #"(?:\s|\n)+") argv)))
         [before after] (s/split (or args "") #" -- ") 
         tokens         (concat (tokenize-command-line (or before "") options)
-                               (map #(vector ::word %) (if (seq after) (s/split after " "))))
-        options-acc    (reduce accumulate-option-arg     options-acc (filter #(isa? (first %) ::option) tokens))
-        remaining      (reduce accumulate-option-default options-acc options-acc)]    
-    (when remaining
-      (let [all-matches (matches #{[acc remaining (map second (filter #(isa? (first %) ::word) tokens))]} tree)
+                               (map #(vector ::word %) (if (seq after) (s/split after " "))))        
+        options-acc    (reduce accumulate-options (select-keys acc options) (filter #(= ::option (first %)) tokens))]
+    (when options-acc
+      (let [remaining (reduce #(case (%1 %2) (0 [] false nil) (dissoc %1 %2) %1) options-acc (if options-acc options))
+            all-matches (matches #{[acc remaining (map second (filter #(isa? (first %) ::word) tokens))]} tree)
             match (ffirst (filter #(and (empty? (% 1)) (empty? (% 2))) all-matches))]
         (when match
-          (into {} (map #(if (string? (key %)) % (vector (option->string (key %)) (val %))) match)))))))
+          (into {} (map present-result match)))))))

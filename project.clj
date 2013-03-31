@@ -1,4 +1,4 @@
-(defproject docopt "1.0.0"
+(defproject docopt "0.6.0"
   :description "docopt creates beautiful command-line interfaces - clojure port"
   :url "http://docopt.org"
   :license {:name "MIT"
