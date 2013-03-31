@@ -13,15 +13,15 @@ The docstring is optional; if omitted, the macro will try to use the docstring o
 at compile-time, and the `args` are matched at run-time. The `args` should be a sequence of command-line arguments like
  those passed to `-main` or `public static void main(String[] args);`.
 
-- A function `match`, basically the run-time equivalent of the `docopt` macro, mainly used for testing. 
-More precisely, the return values of `(match doc args)` and `(docopt doc args)` are identical.
+- A function `-docopt`, basically the run-time equivalent of the `docopt` macro, provided for Java interoperability.
 
 - A function `parse`, which takes a docstring as argument and returns all the information extracted from it.
 This function is called by both `docopt` and `match`.
 
-Here's a full-fledged example:
+## Example
+
 ``` clojure
-(ns example
+(ns example.core
   (:use [docopt.core :only [docopt]]) ;; import the docopt macro from docopt.core
   (:gen-class))
 
@@ -72,8 +72,8 @@ Options:
 
 Run `lein test` to validate all language-agnostic tests in `testcases.docopt`. As of now, test coverage is complete.
 
-## To-do list
+## To do
 
-- Reduce the number of LOCs further while improving clarity at the same time. 
+Reduce the number of LOCs further while improving clarity at the same time. 
 A lot of minor changes were accumulated through getting all the tests to pass. 
 I'm also a bit new to Clojure, so there's certainly room for improvement.

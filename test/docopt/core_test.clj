@@ -2,6 +2,7 @@
   (:require [clojure.data.json :as json])
   (:require [clojure.string    :as s])  
   (:require [docopt.core       :as d])
+  (:require [docopt.match      :as m])
   (:use     clojure.test))
 
 (def doc-block-regex
@@ -33,7 +34,7 @@
   "Produces an error log of all failed tests, or nil on success."
   [test-cases]
   (reduce (fn [e [doc in out]]
-            (let [result (or (d/match doc in) "user-error")]
+            (let [result (or (m/match-argv (d/parse doc) in) "user-error")]
               (if (= result out)
                 e
                 (str e "\n" (s/trim-newline doc) "\n$ prog " (s/join " " in) 

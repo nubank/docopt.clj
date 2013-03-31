@@ -3,7 +3,11 @@
   (:require [docopt.match        :as m])
   (:require [docopt.optionsblock :as o])
   (:require [docopt.usageblock   :as u])
-  (:require [docopt.util         :as util]))
+  (:require [docopt.util         :as util])
+  (:import java.util.HashMap)
+  (:gen-class
+    :name org.docopt.clj
+    :methods [^{:static true} [docopt [String "[Ljava.lang.String;"] java.util.HashMap]]))
 
 (defn parse
   "Parses doc string."
@@ -15,12 +19,6 @@
     (let [[usage-block options-block] (s/split (second usage-split) #"\n\s*\n" 2)]
       (u/parse usage-block (o/parse options-block)))))
 
-(defn match 
-  "Parses doc string and matches command line arguments."
-  [doc args]
-  {:pre [(string? doc) (or (nil? args) (sequential? args))]}
-  (m/match-argv (parse doc) args))
-
 (defmacro docopt
   "Parses doc string at compile-time and matches command line arguments at run-time.
 The doc string may be omitted, in which case the metadata of '-main' is used"
@@ -31,3 +29,13 @@ The doc string may be omitted, in which case the metadata of '-main' is used"
          (throw (Exception. "Docopt with one argument requires that #'-main have a doc string.")))))
   ([doc args]
     `(m/match-argv ~(parse doc) ~args)))
+
+(defn -docopt 
+  "Java-capable run-time equivalent to 'docopt'."
+  [doc args]
+  (if-let [cljmap (m/match-argv (parse doc) (into [] args))]
+    (let [javamap (HashMap. (count cljmap))]
+      (doseq [[k v] cljmap]
+        (.put javamap k (if (vector? v) (into-array v) v)))
+      javamap)))
+
