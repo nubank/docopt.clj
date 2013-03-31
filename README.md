@@ -63,8 +63,8 @@ Options:
       (arg-map "move")        (println "Move" (first (arg-map "<name>")) 
                                        "to (" (arg-map "<x>") "," (arg-map "<y>")
                                        (if-let [speed (arg-map "--speed")]
-                                         (str ") at " speed " knots.")
-                                         ")."))
+                                         (str " ) at " speed " knots.")
+                                         " )."))
       true                    (throw (Exception. "This ought to never happen.")))))
 ```
 
