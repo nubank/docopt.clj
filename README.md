@@ -18,7 +18,7 @@ at compile-time, and the `args` are matched at run-time. The `args` should be a 
 - A function `parse` which takes a docstring as argument and returns all the information extracted from it.
 This function is called by both `docopt` and `-docopt`.
 
-## Example
+## Example - Clojure
 
 ``` clojure
 (ns example.core
@@ -66,6 +66,50 @@ Options:
                                          (str " ) at " speed " knots.")
                                          " )."))
       true                    (throw (Exception. "This ought to never happen.")))))
+```
+
+## Example - Java interoperability
+
+Add the [clojars](https://clojars.org) repository to Maven.
+
+``` xml
+<repository>
+  <id>clojars.org</id>
+  <url>http://clojars.org/repo</url>
+</repository>
+```
+
+Tell Maven about docopt.clj
+
+``` xml
+<dependency>
+  <groupId>docopt</groupId>
+  <artifactId>docopt</artifactId>
+  <version>0.6.0</version>
+</dependency>
+```
+
+Import `org.docopt.clj` in your code and call the static method `clj.docopt(String, String[]);`
+
+``` java
+import java.util.HashMap;
+import org.docopt.clj;
+
+public class Main {
+  
+  public static void main(String[] args) {
+  
+    String docstring = "Usage: prog [options]\n\nOptions:\n-h, --help  Print help.";
+    HashMap<String, Object> result = clj.docopt(docstring, args);
+    
+    if (result.get("--help").toString() == "true") {
+      System.out.println(docstring);
+    }
+    else {
+      System.out.println("You don't need help.");
+    }
+  }
+}
 ```
 
 ## Tests
