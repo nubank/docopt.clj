@@ -25,8 +25,7 @@ Here's a full-fledged example:
   (:use [docopt.core :only [docopt]]) ;; import the docopt macro from docopt.core
   (:gen-class))
 
-(defn #^{:version "Naval Fate, version 1.2.3." 
-         :doc "Naval Fate.
+(defn #^{:doc "Naval Fate.
 
 Usage:
   naval_fate ship new <name>...
@@ -41,9 +40,10 @@ Options:
   --version     Show version.
   --speed=<kn>  Speed in knots [default: 10].
   --moored      Moored (anchored) mine.
-  --drifting    Drifting mine."}
+  --drifting    Drifting mine."
+:version "Naval Fate, version 1.2.3." }
   -main [& args]
-  (let [arg-map (docopt args)]
+  (let [arg-map (docopt args)] ;; with only one argument, docopt parses -main's docstring.
     (cond 
       (or (nil? arg-map)
           (arg-map "--help")) (println (:doc     (meta #'-main)))
@@ -53,7 +53,7 @@ Options:
                                          (arg-map "--moored")   "moored" 
                                          (arg-map "--drifting") "drifting")
                                        "mine at (" (arg-map "<x>") ", " (arg-map "<y>") ").")
-      (arg-map "new")         (println "Created new" 
+      (arg-map "new")         (println "Create new" 
                                        (let [[name & more-names :as names] (arg-map "<name>")]
                                          (if (seq more-names) 
                                            (str "ships " (clojure.string/join ", " names))
@@ -65,7 +65,7 @@ Options:
                                        (if-let [speed (arg-map "--speed")]
                                          (str ") at " speed " knots.")
                                          ")."))
-      true                    (throw (Exception. "This case never occurs, thanks docopt!")))))
+      true                    (throw (Exception. "This ought to never happen.")))))
 ```
 
 ## Tests
