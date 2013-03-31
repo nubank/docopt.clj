@@ -1,6 +1,7 @@
 # docopt.clj
 
-Clojure implementation of the `docopt` language [1], version 0.6, under the MIT license [2].
+Clojure implementation of the [docopt](http://docopt.org/) language, version 0.6, 
+under a [MIT license](http://github.com/docopt/docopt.clj/blob/master/LICENSE).
 
 ## Usage
 
@@ -76,8 +77,3 @@ Run `lein test` to validate all language-agnostic tests in `testcases.docopt`. A
 - Reduce the number of LOCs further while improving clarity at the same time. 
 A lot of minor changes were accumulated through getting all the tests to pass. 
 I'm also a bit new to Clojure, so there's certainly room for improvement.
-
-## Footnotes
-
-[1]: http://docopt.org/ "Docopt home"
-[2]: http://github.com/docopt/docopt.clj/blob/master/LICENSE "docopt.clj licensing info"
