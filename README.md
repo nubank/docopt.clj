@@ -13,10 +13,10 @@ The docstring is optional; if omitted, the macro will try to use the docstring o
 at compile-time, and the `args` are matched at run-time. The `args` should be a sequence of command-line arguments like
  those passed to `-main` or `public static void main(String[] args);`.
 
-- A function `-docopt`, basically the run-time equivalent of the `docopt` macro, provided for Java interoperability.
+- A function `-docopt` which is the run-time equivalent of the `docopt` macro provided for Java interoperability.
 
-- A function `parse`, which takes a docstring as argument and returns all the information extracted from it.
-This function is called by both `docopt` and `match`.
+- A function `parse` which takes a docstring as argument and returns all the information extracted from it.
+This function is called by both `docopt` and `-docopt`.
 
 ## Example
 
