@@ -43,7 +43,7 @@
 provided options which take arguments and which might be ambiguous otherwise."
   [options long-tag short-tag]
   (let [options (filter :takes-arg options)]
-    (concat (zipmap (map #(re-tok "--(" % ")(?:=| )(\\S+)") (map #(or (:long-re %) (:long %)) (filter :long  options)))  
+    (concat (zipmap (map #(re-tok "--(" % ")(?:=| )(\\S+)") (map #(or (:long-re %) (:long %)) (filter :long  options)))
                     (repeat long-tag))
             (zipmap (map #(re-tok "-([^- " % "]*" % ") ?(\\S+)") (map :short (filter :short options))) 
                     (repeat short-tag)))))

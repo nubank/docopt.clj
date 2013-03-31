@@ -28,6 +28,6 @@ The doc string may be omitted, in which case the metadata of '-main' is used"
     `(let [doc# (:doc (meta (var ~'-main)))]
        (if (string? doc#)
          (m/match-argv (parse doc#) ~args)
-         (throw (Exception. "docopt requires a doc string: either provided as first argument, or as :doc metadata in '-main'.")))))
+         (throw (Exception. "Docopt with one argument requires that #'-main have a doc string.")))))
   ([doc args]
     `(m/match-argv ~(parse doc) ~args)))

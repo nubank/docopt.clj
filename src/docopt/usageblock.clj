@@ -120,7 +120,8 @@
   ::group-end (let [[group-type & children :as group]   (peek stack)                    
                     [choice & more-choices :as choices] (make-choices group-type children)]
                 (err (not (isa? tag group-type)) :parse
-                     "Bad '" (if (= tag ::end-optional) \] \)) "'" (if (number? line-number) (str " in line " line-number)) ".")
+                     "Bad '" (if (= tag ::end-optional) \] \)) "'" 
+                     (if (number? line-number) (str " in line " line-number)) ".")
                 (if (seq more-choices) 
                   (push-last (pop stack) (into [::choice] choices))
                   (let [[head & [middle & tail :as more]] choice]
