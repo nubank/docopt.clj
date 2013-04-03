@@ -17,7 +17,7 @@
     (util/err (not= 2 (count usage-split)) :syntax
               (count usage-split) " occurences of the 'usage:' keyword, 1 expected.")
     (let [[usage-block options-block] (s/split (second usage-split) #"\n\s*\n" 2)]
-      (u/parse usage-block (o/parse options-block)))))
+      (u/parse usage-block (o/parse (or options-block ""))))))
 
 (defmacro docopt
   "Parses doc string at compile-time and matches command line arguments at run-time.

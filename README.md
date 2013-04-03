@@ -5,7 +5,7 @@ under a [MIT license](http://github.com/docopt/docopt.clj/blob/master/LICENSE).
 
 ## Usage
 
-Add `[docopt "0.6.0"]` to your dependencies in `project.clj`, and import `docopt.core` in your clojure code. 
+Add `[docopt "0.6.1"]` to your dependencies in `project.clj`, and import `docopt.core` in your clojure code. 
 This namespace contains the public API:
 
 - A macro `docopt` wich takes up to two arguments, a docstring and an `args` sequence.  
@@ -115,9 +115,3 @@ public class Main {
 ## Tests
 
 Run `lein test` to validate all language-agnostic tests in `testcases.docopt`. As of now, test coverage is complete.
-
-## To do
-
-Reduce the number of LOCs further while improving clarity at the same time. 
-A lot of minor changes were accumulated through getting all the tests to pass. 
-I'm also a bit new to Clojure, so there's certainly room for improvement.
