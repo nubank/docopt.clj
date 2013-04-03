@@ -85,7 +85,7 @@ Tell Maven about docopt.clj
 <dependency>
   <groupId>docopt</groupId>
   <artifactId>docopt</artifactId>
-  <version>0.6.0</version>
+  <version>0.6.1</version>
 </dependency>
 ```
 
