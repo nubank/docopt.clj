@@ -89,10 +89,11 @@ Tell Maven about docopt.clj
 </dependency>
 ```
 
-Import `org.docopt.clj` in your code and call the static method `clj.docopt(String, String[]);`
+Import `org.docopt.clj` in your code and call the static method `clj.docopt(String, String[]);` which returns a
+`AbstractMap<String, Object>`.
 
 ``` java
-import java.util.HashMap;
+import java.util.AbstractMap;
 import org.docopt.clj;
 
 public class Main {
@@ -100,7 +101,7 @@ public class Main {
   public static void main(String[] args) {
   
     String docstring = "Usage: prog [options]\n\nOptions:\n-h, --help  Print help.";
-    HashMap<String, Object> result = clj.docopt(docstring, args);
+    AbstractMap<String, Object> result = clj.docopt(docstring, args);
     
     if (result.get("--help").toString() == "true") {
       System.out.println(docstring);

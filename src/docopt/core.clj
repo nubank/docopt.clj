@@ -7,7 +7,7 @@
   (:import java.util.HashMap)
   (:gen-class
     :name org.docopt.clj
-    :methods [^{:static true} [docopt [String "[Ljava.lang.String;"] java.util.HashMap]]))
+    :methods [^{:static true} [docopt [String "[Ljava.lang.String;"] java.util.AbstractMap]]))
 
 (defn parse
   "Parses doc string."
