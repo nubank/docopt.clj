@@ -114,4 +114,9 @@ public class Main {
 
 ## Tests
 
-Run `lein test` to validate all language-agnostic tests in `testcases.docopt`. As of now, test coverage is complete.
+Run `lein test` to validate all tests.
+The tests are automatically downloaded from the language-agnostic
+[testcases.docopt](https://github.com/docopt/docopt/blob/master/testcases.docopt) 
+file in the master branch of the reference implementation.
+Please feel free to (re)open an issue in case this implementation falls behind.
+
