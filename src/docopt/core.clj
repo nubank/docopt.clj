@@ -13,11 +13,10 @@
   "Parses doc string."
   [doc]
   {:pre [(string? doc)]}
-  (let [usage-split (s/split doc #"(?i)usage:\s*")]
-    (util/err (not= 2 (count usage-split)) :syntax
-              (count usage-split) " occurences of the 'usage:' keyword, 1 expected.")
-    (let [[usage-block options-block] (s/split (second usage-split) #"\n\s*\n" 2)]
-      (u/parse usage-block (o/parse (or options-block ""))))))
+  (letfn [(sec-re   [name]          (re-pattern (str "(?:^|\\n)(?!\\s).*(?i)" name ":\\s*(.*(?:\\n(?=[ \\t]).+)*)")))
+          (section  [name splitfn]  (map s/trim (mapcat (comp splitfn second) (re-seq (sec-re name) doc))))
+          (osplitfn [options-block] (re-seq #"(?<=^|\n)\s*-.*(?:\s+[^- \t\n].*)*" options-block))]
+    (u/parse (section "usage" s/split-lines) (o/parse (section "options" osplitfn)))))
 
 (defmacro docopt
   "Parses doc string at compile-time and matches command line arguments at run-time.
@@ -31,9 +30,11 @@ The doc string may be omitted, in which case the metadata of '-main' is used"
     `(m/match-argv ~(parse doc) ~args)))
 
 (defn -docopt 
-  "Java-capable run-time equivalent to 'docopt'."
+  "Java-capable run-time equivalent to 'docopt';
+argument 'doc' can be either a doc string or the result of a call to 'parse'.
+Returns a java.util.HashMap of the matched values provided by the 'args' sequence."
   [doc args]
-  (if-let [cljmap (m/match-argv (parse doc) (into [] args))]
+  (if-let [cljmap (m/match-argv (if (string? doc) (parse doc) doc) (into [] args))]
     (let [javamap (HashMap. (count cljmap))]
       (doseq [[k v] cljmap]
         (.put javamap k (if (vector? v) (into-array v) v)))

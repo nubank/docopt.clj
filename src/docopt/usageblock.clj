@@ -143,7 +143,7 @@
   ::group     (conj stack [(if (= data "[") ::optional ::required) []])
   ::end-group (let [[group-type & children :as group] (peek stack)]
                 (err (not= data (if (= group-type ::optional) "]" ")")) :parse
-                     "Bad '" data "'" (if (number? line-number) (str " in line " line-number)) ".")
+                     "Bad '" data "'" (if (number? line-number) (str " in usage line " line-number)) ".")
                 (end-group stack (make-choices group-type children))))
 
 (defn syntax-tree
@@ -165,8 +165,8 @@
             linefn #(s/join ", " (sort (into #{} (map second (options %)))))]
         (err (seq (options alt-o)) :parse
              "Conflicting definitions of '" (str \- (if (:long o) (str \- (:long o)) (:short o))) "': " 
-             " takes " (if (:takes-arg alt-o) "no ") "argument on line(s) " (linefn o)
-             " but takes " (if (:takes-arg o) "no ") "argument on line(s) " (linefn alt-o) ".")))
+             " takes " (if (:takes-arg alt-o) "no ") "argument on usage line(s) " (linefn o)
+             " but takes " (if (:takes-arg o) "no ") "argument on usage line(s) " (linefn alt-o) ".")))
     (map (partial into #{}) [(keys options) (selectfn ::command) (selectfn ::argument)])))
  
 (defmultimethods occurs
@@ -181,8 +181,8 @@
 
 (defn parse 
   "Parses usage block, with a sequence of options from the options block to resolve pattern ambiguities."
-  [block options]  
-  (let [lines      (map #(rest (re-matches #"\s*(\S+)\s*(.*)" %)) (s/split-lines block))
+  [usage-lines options]  
+  (let [lines      (map #(rest (re-matches #"\s*(\S+)\s*(.*)" %)) usage-lines)
         prog-names (map first lines)]
     (err (apply not= prog-names) :parse
          "Inconsistent program name in usage patterns: " (s/join ", " (into #{} prog-names)) ".")

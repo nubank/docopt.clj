@@ -22,32 +22,31 @@
 (defn load-test-cases
   "Loads language-agnostic docopt tests from file (such as testcases.docopt)."
   [path] 
-  (into (array-map) 
-        (map (fn [[_ doc tests]]
-               [doc (into (array-map) 
-                          (map (fn [[_ args result]]
-                                 [(filter seq (s/split (or args "") #"\s+")) (json/read-str result)])
-                               (re-seq test-block-regex tests)))])
-             (re-seq doc-block-regex (s/replace (slurp path) #"#.*" "")))))
+  (into [] (mapcat (fn [[_ doc tests]]
+                   (map (fn [[_ args result]]
+                          [doc (into [] (filter seq (s/split (or args "") #"\s+"))) (json/read-str result)])
+                        (re-seq test-block-regex tests)))
+                 (re-seq doc-block-regex (s/replace (slurp path) #"#.*" "")))))
 
-(defn validation-report
-  "Produces an error log of all failed tests, or nil on success."
-  [test-cases]
-  (reduce (fn [e [doc in out]]
-            (let [result (or (m/match-argv (d/parse doc) in) "user-error")]
-              (if (= result out)
-                e
-                (str e "\n" (s/trim-newline doc) "\n$ prog " (s/join " " in) 
-                     "\nexpected: " out "\nobtained: " result "\n\n"))))
-          nil
-          (mapcat (fn [[doc tests]]
-                    (map #(into [doc] %) tests))
-                  test-cases)))  
+(defn test-case-error-report
+  ""
+  [doc in out]
+  (let [docinfo (try (d/parse doc) 
+                  (catch Exception e (.getMessage e)))]
+    (if (string? docinfo)
+      (str "\n" (s/trim-newline doc) "\n" docinfo)
+      (let [result (or (m/match-argv docinfo in) "user-error")]
+        (if (not= result out)
+          (str "\n" (s/trim-newline doc) "\n$ prog " (s/join " " in) 
+               "\nexpected: " out "\nobtained: " result "\n\n"))))))
 
 (defn valid? [test-cases-path]
-  (if-let [e (validation-report (load-test-cases test-cases-path))]
-    (throw (Exception. e))
+  (let [test-cases (load-test-cases test-cases-path)]
+    (when-let [eseq (seq (remove nil? (map (partial apply test-case-error-report) test-cases)))]
+      (println "Failed" (count eseq) "/" (count test-cases) "tests loaded from '" test-cases-path "'.\n")
+      (throw (Exception. (apply str eseq))))
+    (println "Successfully passed" (count test-cases) "tests loaded from '" test-cases-path "'.\n")
     true))
 
 (deftest docopt
-  (is (valid? "testcases.docopt")))
+  (is (valid? "https://raw.github.com/docopt/docopt/master/testcases.docopt")))

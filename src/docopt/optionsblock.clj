@@ -25,9 +25,9 @@
             {:takes-arg false})
           (filter val {:short short :long long})))))
 
-(defn parse [block]
-  "Parses options block, i.e. everything following the usage block." 
-  (let [options (map parse-option (re-seq #"(?<=^|\n)\s*-.*(?:\s+[^- \t\n].*)*" block))]
+(defn parse [options-lines]
+  "Parses options lines." 
+  (let [options (map parse-option options-lines)]
     (err (not (and (distinct? (filter identity (map :long options)))
                    (distinct? (filter identity (map :short options)))))
          :syntax "In options descriptions, at least one option defined more than once.")
