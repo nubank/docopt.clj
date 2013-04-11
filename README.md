@@ -22,9 +22,9 @@ This function is called by both `docopt` and `-docopt`.
 
 ``` clojure
 (ns example.core
-  (:use [docopt.core :only [docopt]]) ;; import the docopt macro from docopt.core
-  (:gen-class))
-
+  (:use [docopt.core :only [docopt]]) ; import the docopt macro from docopt.core
+  (:gen-class)
+  
 (defn #^{:doc "Naval Fate.
 
 Usage:
@@ -43,7 +43,7 @@ Options:
   --drifting    Drifting mine."
 :version "Naval Fate, version 1.2.3." }
   -main [& args]
-  (let [arg-map (docopt args)] ;; with only one argument, docopt parses -main's docstring.
+  (let [arg-map (docopt args)] ; with only one argument, docopt parses -main's docstring.
     (cond 
       (or (nil? arg-map)
           (arg-map "--help")) (println (:doc     (meta #'-main)))
@@ -70,17 +70,14 @@ Options:
 
 ## Example - Java interoperability
 
-Add the [clojars](https://clojars.org) repository to Maven.
-
+Assuming you're using Maven, update your `pom.xml` by adding a child to its `repositories` node
 ``` xml
 <repository>
   <id>clojars.org</id>
   <url>http://clojars.org/repo</url>
 </repository>
 ```
-
-Tell Maven about docopt.clj
-
+and to its `dependencies` node.
 ``` xml
 <dependency>
   <groupId>docopt</groupId>
@@ -117,7 +114,7 @@ public class Main {
 
 Run `lein test` to validate all tests.
 The tests are automatically downloaded from the language-agnostic
-[testcases.docopt](https://github.com/docopt/docopt/blob/master/testcases.docopt) 
-file in the master branch of the reference implementation.
+`testcases.docopt` file in the reference implementation, master branch commit 
+[511d1c57b5](https://github.com/docopt/docopt/tree/511d1c57b59cd2ed663a9f9e181b5160ce97e728).
 Please feel free to (re)open an issue in case this implementation falls behind.
 

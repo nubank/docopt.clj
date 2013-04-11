@@ -29,7 +29,7 @@
                  (re-seq doc-block-regex (s/replace (slurp path) #"#.*" "")))))
 
 (defn test-case-error-report
-  ""
+  "Returns a report of all failed test cases"
   [doc in out]
   (let [docinfo (try (d/parse doc) 
                   (catch Exception e (.getMessage e)))]
@@ -40,13 +40,15 @@
           (str "\n" (s/trim-newline doc) "\n$ prog " (s/join " " in) 
                "\nexpected: " out "\nobtained: " result "\n\n"))))))
 
-(defn valid? [test-cases-path]
-  (let [test-cases (load-test-cases test-cases-path)]
+(defn valid?
+  "Validates all test cases found in the file named 'test-cases-file-name'."
+  [test-cases-file-name]
+  (let [test-cases (load-test-cases test-cases-file-name)]
     (when-let [eseq (seq (remove nil? (map (partial apply test-case-error-report) test-cases)))]
-      (println "Failed" (count eseq) "/" (count test-cases) "tests loaded from '" test-cases-path "'.\n")
+      (println "Failed" (count eseq) "/" (count test-cases) "tests loaded from '" test-cases-file-name "'.\n")
       (throw (Exception. (apply str eseq))))
-    (println "Successfully passed" (count test-cases) "tests loaded from '" test-cases-path "'.\n")
+    (println "Successfully passed" (count test-cases) "tests loaded from '" test-cases-file-name "'.\n")
     true))
 
 (deftest docopt
-  (is (valid? "https://raw.github.com/docopt/docopt/master/testcases.docopt")))
+  (is (valid? "https://raw.github.com/docopt/docopt/511d1c57b59cd2ed663a9f9e181b5160ce97e728/testcases.docopt")))

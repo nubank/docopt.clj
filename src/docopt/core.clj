@@ -21,11 +21,11 @@
 (defmacro docopt
   "Parses doc string at compile-time and matches command line arguments at run-time.
 The doc string may be omitted, in which case the metadata of '-main' is used"
-  ([args]
-    `(let [doc# (:doc (meta (var ~'-main)))]
-       (if (string? doc#)
-         (m/match-argv (parse doc#) ~args)
-         (throw (Exception. "Docopt with one argument requires that #'-main have a doc string.")))))
+  ([args] 
+    (let [doc (:doc (meta (find-var (symbol (pr-str (ns-name *ns*)) "-main"))))]
+      (if (string? doc)
+        `(m/match-argv ~(parse doc) ~args)
+        (throw (Exception. "Docopt with one argument requires that #'-main have a doc string.\n")))))
   ([doc args]
     `(m/match-argv ~(parse doc) ~args)))
 
