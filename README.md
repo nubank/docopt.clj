@@ -9,7 +9,7 @@ Add `[docopt "0.6.1"]` to your dependencies in `project.clj`, and import `docopt
 This namespace contains the public API:
 
 - A macro `docopt` wich takes up to two arguments, a docstring and an `args` sequence.  
-The docstring is optional; if omitted, the macro will try to use the docstring of `-main`. The docstring is parsed 
+The docstring is optional; if omitted, the macro will try to use the docstring of `#'-main`. The docstring is parsed 
 at compile-time, and the `args` are matched at run-time. The `args` should be a sequence of command-line arguments like
  those passed to `-main` or `public static void main(String[] args);`.
 
@@ -65,7 +65,7 @@ Options:
                                        (if-let [speed (arg-map "--speed")]
                                          (str " ) at " speed " knots.")
                                          " )."))
-      true                    (throw (Exception. "This ought to never happen.")))))
+      true                    (throw (Exception. "This ought to never happen.\n")))))
 ```
 
 ## Example - Java interoperability
