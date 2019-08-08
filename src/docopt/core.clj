@@ -20,7 +20,6 @@
 
 (defn docopt
   [doc args f]
-  (let [arg-map (-> doc parse (m/match-argv args))]
-    (if-not arg-map
-      (println doc)
-      (f))))
+  (if-let [arg-map (-> doc parse (m/match-argv args))]
+    (f)
+    (println doc)))
