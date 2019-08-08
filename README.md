@@ -1,113 +1,57 @@
 # docopt.clj
 
-Clojure implementation of the [docopt](http://docopt.org/) language, version 0.6, 
-under a [MIT license](http://github.com/docopt/docopt.clj/blob/master/LICENSE).
+Clojure implementation of the [docopt](http://docopt.org/) language, version 0.6, under a [MIT license](http://github.com/docopt/docopt.clj/blob/master/LICENSE).
 
 ## Usage
 
-Add `[docopt "0.6.1"]` to your dependencies in `project.clj`, and import `docopt.core` in your clojure code. 
-This namespace contains the public API:
-
-- A macro `docopt` wich takes up to two arguments, a docstring and an `args` sequence.  
-The docstring is optional; if omitted, the macro will try to use the docstring of `#'-main`. The docstring is parsed 
-at compile-time, and the `args` are matched at run-time. The `args` should be a sequence of command-line arguments like
- those passed to `-main` or `public static void main(String[] args);`.
-
-- A function `-docopt` which is the run-time equivalent of the `docopt` macro provided for Java interoperability.
-
-- A function `parse` which takes a docstring as argument and returns all the information extracted from it.
-This function is called by both `docopt` and `-docopt`.
-
-## Example - Clojure
+Save the following script and make it executable with `chmod +x`:
 
 ``` clojure
-(ns example.core
-  (:use [docopt.core :only [docopt]]) ; import the docopt macro from docopt.core
-  (:gen-class)
-  
-(defn #^{:doc "Naval Fate.
+#!/bin/sh
+#_(
+  DEPS='
+   {:deps {docopt
+             {:git/url "https://github.com/FelipeCortez/docopt.clj"
+               :sha    "5191b7ef3ef3f80b4e19c1cd4800333c7ad2513f"}}}
+   '
 
-Usage:
-  naval_fate ship new <name>...
-  naval_fate ship <name> move <x> <y> [--speed=<kn>]
-  naval_fate ship shoot <x> <y>
-  naval_fate mine (set|remove) <x> <y> [--moored|--drifting]
-  naval_fate -h | --help
-  naval_fate --version
+  OPTS='
+  -J-Xms256m -J-Xmx256m
+  -J-client
+  -J-Dclojure.spec.skip-macros=true
+  '
+
+  exec clojure $OPTS -Sdeps "$DEPS" -i "$0" -m docopt.example "$@"
+)
+
+(ns docopt.example
+  (:require [docopt.core :as docopt]))
+
+(def usage "Test application.
+
+Usage: test-script [options]
 
 Options:
-  -h --help     Show this screen.
-  --version     Show version.
-  --speed=<kn>  Speed in knots [default: 10].
-  --moored      Moored (anchored) mine.
-  --drifting    Drifting mine."
-:version "Naval Fate, version 1.2.3." }
-  -main [& args]
-  (let [arg-map (docopt args)] ; with only one argument, docopt parses -main's docstring.
-    (cond 
-      (or (nil? arg-map)
-          (arg-map "--help")) (println (:doc     (meta #'-main)))
-      (arg-map "--version")   (println (:version (meta #'-main)))
-      (arg-map "mine")        (println (if (arg-map "set") "Set" "Remove") 
-                                       (cond 
-                                         (arg-map "--moored")   "moored" 
-                                         (arg-map "--drifting") "drifting")
-                                       "mine at (" (arg-map "<x>") ", " (arg-map "<y>") ").")
-      (arg-map "new")         (println "Create new" 
-                                       (let [[name & more-names :as names] (arg-map "<name>")]
-                                         (if (seq more-names) 
-                                           (str "ships " (clojure.string/join ", " names))
-                                           (str "ship " name)))
-                                       ".")
-      (arg-map "shoot")       (println "Shoot at (" (arg-map "<x>") "," (arg-map "<y>") ").")
-      (arg-map "move")        (println "Move" (first (arg-map "<name>")) 
-                                       "to (" (arg-map "<x>") "," (arg-map "<y>")
-                                       (if-let [speed (arg-map "--speed")]
-                                         (str " ) at " speed " knots.")
-                                         " )."))
-      true                    (throw (Exception. "This ought to never happen.\n")))))
+  --an-arg <something>  An argument")
+(defn -main [& args]
+  (docopt/docopt usage args
+                 (fn [arg-map]
+                   (println arg-map)
+                   (println (arg-map "--an-arg")))))
 ```
 
-## Example - Java interoperability
+```bash
+$ chmod +x test-script
+$ ./test-script --an-arg test
+{--an-arg test}
+test
+$ ./test-script # displays the help text
+Test application.
 
-Assuming you're using Maven, update your `pom.xml` by adding a child to its `repositories` node
-``` xml
-<repository>
-  <id>clojars.org</id>
-  <url>http://clojars.org/repo</url>
-</repository>
-```
-and to its `dependencies` node.
-``` xml
-<dependency>
-  <groupId>docopt</groupId>
-  <artifactId>docopt</artifactId>
-  <version>0.6.1</version>
-</dependency>
-```
+Usage: testapp [options]
 
-Import `org.docopt.clj` in your code and call the static method `clj.docopt(String, String[]);` which returns a
-`AbstractMap<String, Object>`.
-
-``` java
-import java.util.AbstractMap;
-import org.docopt.clj;
-
-public class Main {
-  
-  public static void main(String[] args) {
-  
-    String docstring = "Usage: prog [options]\n\nOptions:\n-h, --help  Print help.";
-    AbstractMap<String, Object> result = clj.docopt(docstring, args);
-    
-    if (result.get("--help").toString() == "true") {
-      System.out.println(docstring);
-    }
-    else {
-      System.out.println("You don't need help.");
-    }
-  }
-}
+Options:
+  --an-arg <something>  An argument
 ```
 
 ## Tests
