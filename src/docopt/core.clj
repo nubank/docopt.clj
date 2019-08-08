@@ -19,23 +19,8 @@
     (u/parse (section "usage" s/split-lines) (o/parse (section "options" osplitfn)))))
 
 (defn docopt
-  "Parses doc string at compile-time and matches command line arguments at run-time.
-The doc string may be omitted, in which case the metadata of '-main' is used"
-  ([args]
-    (let [doc (:doc (meta (find-var (symbol (pr-str (ns-name *ns*)) "-main"))))]
-      (if (string? doc)
-        (m/match-argv (parse doc) args)
-        (throw (Exception. "Docopt with one argument requires that #'-main have a doc string.\n")))))
-  ([doc args]
-    (m/match-argv (parse doc) args)))
-
-(defn -docopt
-  "Java-capable run-time equivalent to 'docopt';
-argument 'doc' can be either a doc string or the result of a call to 'parse'.
-Returns a java.util.HashMap of the matched values provided by the 'args' sequence."
-  [doc args]
-  (if-let [cljmap (m/match-argv (if (string? doc) (parse doc) doc) (into [] args))]
-    (let [javamap (HashMap. (count cljmap))]
-      (doseq [[k v] cljmap]
-        (.put javamap k (if (vector? v) (into-array v) v)))
-      javamap)))
+  [doc args f]
+  (let [arg-map (-> doc parse (m/match-argv args))]
+    (cond
+      (or (nil? arg-map) (arg-map "--help")) (println doc)
+      :otherwise                             (f))))
