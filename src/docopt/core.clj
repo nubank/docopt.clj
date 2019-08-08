@@ -21,6 +21,6 @@
 (defn docopt
   [doc args f]
   (let [arg-map (-> doc parse (m/match-argv args))]
-    (cond
-      (or (nil? arg-map) (arg-map "--help")) (println doc)
-      :otherwise                             (f))))
+    (if-not arg-map
+      (println doc)
+      (f))))
