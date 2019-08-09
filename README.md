@@ -1,6 +1,8 @@
 # docopt.clj
 
-Clojure implementation of the [docopt](http://docopt.org/) language, version 0.6, under a [MIT license](http://github.com/docopt/docopt.clj/blob/master/LICENSE).
+Clojure implementation of the [docopt](http://docopt.org/) description language.
+
+Forked from [signalpillar](https://github.com/signalpillar)'s [fork](https://github.com/signalpillar/docopt.clj) of docopt, [originally](https://github.com/docopt/docopt.clj/) by [@postamar](https://github.com/postamar).
 
 ## Usage
 
@@ -11,7 +13,7 @@ Save the following script and make it executable with `chmod +x`:
 #_(
   DEPS='
    {:deps {docopt
-             {:git/url "https://github.com/FelipeCortez/docopt.clj"
+             {:git/url "https://github.com/nubank/docopt.clj"
                :sha    "5191b7ef3ef3f80b4e19c1cd4800333c7ad2513f"}}}
    '
 
@@ -62,3 +64,6 @@ The tests are automatically downloaded from the language-agnostic
 [511d1c57b5](https://github.com/docopt/docopt/tree/511d1c57b59cd2ed663a9f9e181b5160ce97e728).
 Please feel free to (re)open an issue in case this implementation falls behind.
 
+## License
+
+[MIT license](LICENSE).
