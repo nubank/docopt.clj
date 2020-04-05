@@ -22,6 +22,28 @@ In order to add `docopt.clj` to the classpath, you can either
   cd babashka
   ./naval_fate_dynamic.clj
   ```
+  
+`babashka/common.clj` contains an example of how to call docopt's entrypoint function.
+
+In both cases, the output should be
+
+``` bash
+$ ./naval_fate_env.clj ship Unicorn move $'20°37\'42.0"N' $'70°52\'25.0"W' 
+{"--drifting" false,
+ "--help" false,
+ "--moored" false,
+ "--speed" "10",
+ "--version" false,
+ "<lat>" "20°37'42.0\"N",
+ "<long>" "70°52'25.0\"W",
+ "<name>" "Unicorn",
+ "mine" false,
+ "move" true,
+ "new" false,
+ "remove" false,
+ "set" false,
+ "ship" true}
+```
 
 ### tools.deps
 
