@@ -6,7 +6,24 @@ Forked from [@signalpillar](https://github.com/signalpillar)'s [fork](https://gi
 
 ## Usage
 
-Save the following script and make it executable with `chmod +x`:
+### babashka
+
+In order to add `docopt.clj` to the classpath, you can either
+
+- Use an environment variable
+  ``` bash
+  export BABASHKA_CLASSPATH=$(clojure -Spath -Sdeps '{:deps {docopt {:git/url "https://github.com/nubank/docopt.clj" :sha "12b997548381b607ddb246e4f4c54c01906e70aa"}}}')
+  ./babashka/naval_fate.clj
+  ```
+
+- Dynamically include it with `(require '[babashka.classpath :refer [add-classpath])`
+  ``` bash
+  ./babashka/naval_fate_dynamic.clj
+  ```
+
+### tools.deps
+
+Save the following script as `test-script` and make it executable with `chmod +x`:
 
 ``` clojure
 #!/bin/sh
