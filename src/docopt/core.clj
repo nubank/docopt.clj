@@ -1,13 +1,8 @@
 (ns docopt.core
-  (:require [clojure.string      :as s])
-  (:require [docopt.match        :as m])
-  (:require [docopt.optionsblock :as o])
-  (:require [docopt.usageblock   :as u])
-  (:require [docopt.util         :as util])
-  (:import java.util.HashMap)
-  (:gen-class
-    :name org.docopt.clj
-    :methods [^{:static true} [docopt [String "[Ljava.lang.String;"] java.util.AbstractMap]]))
+  (:require [clojure.string      :as s]
+            [docopt.match        :as m]
+            [docopt.optionsblock :as o]
+            [docopt.usageblock   :as u]))
 
 (defn parse
   "Parses doc string."

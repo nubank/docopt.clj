@@ -1,8 +1,7 @@
 (ns docopt.match
-  (:require [clojure.set       :as set])
-  (:require [clojure.string    :as s])
-  (:require [docopt.usageblock :as u])
-  (:use      docopt.util))
+  (:require [clojure.set       :as set]
+            [clojure.string    :as s]
+            [docopt.util :refer [defmultimethods re-tok tokenize]]))
 
 ;; parse command line
 
@@ -70,7 +69,7 @@
    (cond 
      (nil? value) default-value
      (= [] value) (if (vector? default-value) default-value [default-value])
-     true         value)])
+     :else        value)])
 
 (defn match-argv 
   "Match command-line arguments with usage patterns."

@@ -1,6 +1,6 @@
 (ns docopt.usageblock
-  (:require [clojure.string :as s])
-  (:use      docopt.util))
+  (:require [clojure.string :as s]
+            [docopt.util :refer [defmultimethods err re-arg-str re-tok specialize tokenize]]))
 
 (specialize {::token [::repeat ::options ::option ::command ::argument ::group ::choice ::end-group]
              ::group [::required ::optional]})

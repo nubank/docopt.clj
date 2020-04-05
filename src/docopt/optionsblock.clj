@@ -1,6 +1,6 @@
 (ns docopt.optionsblock
-  (:require [clojure.string :as s])
-  (:use      docopt.util))
+  (:require [clojure.string :as s]
+            [docopt.util :refer [err re-arg-str tokenize]]))
 
 (defn tokenize-option
   "Generates a sequence of tokens for an option specification string."
