@@ -12,13 +12,15 @@ In order to add `docopt.clj` to the classpath, you can either
 
 - Use an environment variable
   ``` bash
+  cd babashka
   export BABASHKA_CLASSPATH=$(clojure -Spath -Sdeps '{:deps {docopt {:git/url "https://github.com/nubank/docopt.clj" :sha "12b997548381b607ddb246e4f4c54c01906e70aa"}}}')
-  ./babashka/naval_fate.clj
+  ./naval_fate_env.clj
   ```
 
 - Dynamically include it with `(require '[babashka.classpath :refer [add-classpath])`
   ``` bash
-  ./babashka/naval_fate_dynamic.clj
+  cd babashka
+  ./naval_fate_dynamic.clj
   ```
 
 ### tools.deps

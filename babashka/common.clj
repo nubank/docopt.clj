@@ -1,7 +1,3 @@
-#!/usr/bin/env bb
-
-(require '[docopt.core :as docopt])
-
 (def usage "Naval Fate.
 
 Usage:
