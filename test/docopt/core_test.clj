@@ -38,7 +38,7 @@
       (let [result (or (m/match-argv docinfo in) "user-error")]
         (if (not= result out)
           (str "\n" (s/trim-newline doc) "\n$ prog " (s/join " " in) 
-               "\nexpected: " out "\nobtained: " result "\n\n"))))))
+               "\nexpected: " (json/write-str out) "\nobtained: " (json/write-str result) "\n\n"))))))
 
 (defn valid?
   "Validates all test cases found in the file named 'test-cases-file-name'."
@@ -51,4 +51,5 @@
     true))
 
 (deftest docopt
-  (is (valid? "https://raw.github.com/docopt/docopt/511d1c57b59cd2ed663a9f9e181b5160ce97e728/testcases.docopt")))
+  (is (valid? "https://raw.github.com/docopt/docopt/511d1c57b59cd2ed663a9f9e181b5160ce97e728/testcases.docopt"))
+  (is (valid? "test/docopt/extra_testcases.docopt")))
