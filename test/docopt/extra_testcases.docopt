@@ -33,3 +33,8 @@ $ prog x y --bar bar -- extra
 
 $ prog a b c d --foo --bar bar -- extra
 {"--bar":"bar","--foo":true,"<extra>":["extra"],"<param-a>":"a","<param-b>":"b","<param-c>":"c","<param-d>":"d","<param-x>":null,"<param-y>":null}
+
+$ prog x y -- e1 e2 e3 e4
+{"--bar":null,"--foo":false,"<extra>":["e3","e4"],"<param-a>":"x","<param-b>":"y","<param-c>":"e1","<param-d>":"e2","<param-x>":null,"<param-y>":null}
+# Wrong, this should be:
+# {"--bar":null,"--foo":false,"<extra>":["e1","e2","e3","e4"],"<param-a>":null,<param-b>":null,<param-c>":null,"<param-d>":null,<param-x>":"x","<param-y>":"y"}
