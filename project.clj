@@ -3,5 +3,5 @@
   :url "http://docopt.org"
   :license {:name "MIT" :url "https://github.com/docopt/docopt.clj/blob/master/LICENSE"}
   :dependencies [[org.clojure/clojure "1.10.0"]]
-  :profiles {:test {:dependencies [[org.clojure/data.json "2.2.1"]]}}
+  :profiles {:dev {:dependencies [[org.clojure/data.json "2.2.1"]]}}
   :aot :all)
