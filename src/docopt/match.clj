@@ -1,6 +1,6 @@
 (ns docopt.match
-  (:require [clojure.set       :as set]
-            [clojure.string    :as s]
+  (:require [clojure.set :as set]
+            [clojure.string :as s]
             [docopt.util :refer [defmultimethods re-tok tokenize]]))
 
 ;; parse command line
@@ -36,15 +36,15 @@
   "If command line state matches tree node, update accumulator, else return nil."
   [[type key :as pattern] [acc options [word & more-words :as cmdseq] :as state]]
   type
-  :docopt.usageblock/argument (if word
+  :docopt.usageblock/argument (when word
                                 [(assoc acc key (if (acc key) (conj (acc key) word) word)) options more-words])
-  :docopt.usageblock/command  (if (= key word)
+  :docopt.usageblock/command  (when (= key word)
                                 [(assoc acc key (if (acc key) (inc (acc key))       true)) options more-words])
   :docopt.usageblock/option   (if-let [[head & tail] (seq (options key))]
                                 (let [to (acc key)
                                       new-to (if head (if to (conj to head) head) (if to (inc to) true))]
                                   [(assoc acc key new-to) (assoc options key tail) cmdseq])
-                                (if (:default-value key) state)))
+                                (when (:default-value key) state)))
     
 (defmultimethods matches 
   "If command line state matches tree node, update accumulator, else return nil."

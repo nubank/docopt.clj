@@ -62,7 +62,7 @@
         [option] (filter #(= name (% name-key)) options)]
     (err (and option (not= takes-arg (:takes-arg option))) :parse
          "Usage line " lnum ": " (if (= name-key :short) "short" "long") " option '" (option name-key)
-         "'already defined with" (if takes-arg "out") " argument.")
+         "'already defined with" (when takes-arg "out") " argument.")
     [::option lnum (or option {name-key name :takes-arg takes-arg})]))
 
 (defmultimethods expand 
@@ -145,7 +145,7 @@
   ::group     (conj stack [(if (= data "[") ::optional ::required) []])
   ::end-group (let [[group-type & children :as group] (peek stack)]
                 (err (not= data (if (= group-type ::optional) "]" ")")) :parse
-                     "Bad '" data "'" (if (number? line-number) (str " in usage line " line-number)) ".")
+                     "Bad '" data "'" (when (number? line-number) (str " in usage line " line-number)) ".")
                 (end-group stack (make-choices group-type children))))
 
 (defn syntax-tree
@@ -167,8 +167,8 @@
             linefn #(s/join ", " (sort (into #{} (map second (options %)))))]
         (err (seq (options alt-o)) :parse
              "Conflicting definitions of '" (str \- (if (:long o) (str \- (:long o)) (:short o))) "': " 
-             " takes " (if (:takes-arg alt-o) "no ") "argument on usage line(s) " (linefn o)
-             " but takes " (if (:takes-arg o) "no ") "argument on usage line(s) " (linefn alt-o) ".")))
+             " takes " (when (:takes-arg alt-o) "no ") "argument on usage line(s) " (linefn o)
+             " but takes " (when (:takes-arg o) "no ") "argument on usage line(s) " (linefn alt-o) ".")))
     (map (partial into #{}) [(keys options) (selectfn ::command) (selectfn ::argument)])))
  
 (defmultimethods occurs

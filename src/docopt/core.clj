@@ -1,8 +1,8 @@
 (ns docopt.core
-  (:require [clojure.string      :as s]
-            [docopt.match        :as m]
+  (:require [clojure.string :as s]
+            [docopt.match :as m]
             [docopt.optionsblock :as o]
-            [docopt.usageblock   :as u]))
+            [docopt.usageblock :as u]))
 
 (defn parse
   "Parses doc string."
