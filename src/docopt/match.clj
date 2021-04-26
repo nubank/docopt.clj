@@ -1,6 +1,6 @@
 (ns docopt.match
-  (:require [clojure.set       :as set]
-            [clojure.string    :as s]
+  (:require [clojure.set :as set]
+            [clojure.string :as s]
             [docopt.util :refer [defmultimethods re-tok tokenize]]))
 
 ;; parse command line
@@ -36,15 +36,15 @@
   "If command line state matches tree node, update accumulator, else return nil."
   [[type key :as pattern] [acc options [word & more-words :as cmdseq] :as state]]
   type
-  :docopt.usageblock/argument (if word
+  :docopt.usageblock/argument (when word
                                 [(assoc acc key (if (acc key) (conj (acc key) word) word)) options more-words])
-  :docopt.usageblock/command  (if (= key word)
+  :docopt.usageblock/command  (when (= key word)
                                 [(assoc acc key (if (acc key) (inc (acc key))       true)) options more-words])
   :docopt.usageblock/option   (if-let [[head & tail] (seq (options key))]
                                 (let [to (acc key)
                                       new-to (if head (if to (conj to head) head) (if to (inc to) true))]
                                   [(assoc acc key new-to) (assoc options key tail) cmdseq])
-                                (if (:default-value key) state)))
+                                (when (:default-value key) state)))
     
 (defmultimethods matches 
   "If command line state matches tree node, update accumulator, else return nil."
@@ -71,9 +71,15 @@
      (= [] value) (if (vector? default-value) default-value [default-value])
      :else        value)])
 
+(defn- biggest-match
+  [matches]
+  (letfn [(filled-vals-count [match]
+            (->> match first vals (remove nil?) count))]
+    (->> matches (sort-by filled-vals-count >) first)))
+
 (defn match-argv 
   "Match command-line arguments with usage patterns."
   [docmap argv]
   (if-let [state (parse docmap argv)]
-    (if-let [[match] (first (filter #(every? empty? (cons (% 2) (vals (% 1)))) (matches #{state} (:tree docmap))))]
+    (if-let [[match] (biggest-match (filter #(every? empty? (cons (% 2) (vals (% 1)))) (matches #{state} (:tree docmap))))]
       (into (sorted-map) (map #(if (string? (key %)) % (option-value %)) match)))))

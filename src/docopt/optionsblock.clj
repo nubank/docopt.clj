@@ -25,8 +25,9 @@
             {:takes-arg false})
           (filter val {:short short :long long})))))
 
-(defn parse [options-lines]
-  "Parses options lines." 
+(defn parse
+  "Parses options lines."
+  [options-lines]
   (let [options (map parse-option options-lines)]
     (err (not (and (distinct? (filter identity (map :long options)))
                    (distinct? (filter identity (map :short options)))))

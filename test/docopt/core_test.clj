@@ -1,9 +1,9 @@
 (ns docopt.core-test
-  (:require [clojure.data.json :as json])
-  (:require [clojure.string    :as s])  
-  (:require [docopt.core       :as d])
-  (:require [docopt.match      :as m])
-  (:use     clojure.test))
+  (:require [clojure.data.json :as json]
+            [clojure.string :as s]
+            [clojure.test :refer :all]
+            [docopt.core :as d]
+            [docopt.match :as m]))
 
 (def doc-block-regex
   (let [doc-begin  "r\\\"{3}"
@@ -36,9 +36,9 @@
     (if (string? docinfo)
       (str "\n" (s/trim-newline doc) "\n" docinfo)
       (let [result (or (m/match-argv docinfo in) "user-error")]
-        (if (not= result out)
+        (when (not= result out)
           (str "\n" (s/trim-newline doc) "\n$ prog " (s/join " " in) 
-               "\nexpected: " out "\nobtained: " result "\n\n"))))))
+               "\nexpected: " (json/write-str out) "\nobtained: " (json/write-str result) "\n\n"))))))
 
 (defn valid?
   "Validates all test cases found in the file named 'test-cases-file-name'."
@@ -50,5 +50,6 @@
     (println "Successfully passed" (count test-cases) "tests loaded from '" test-cases-file-name "'.\n")
     true))
 
-(deftest docopt
-  (is (valid? "https://raw.github.com/docopt/docopt/511d1c57b59cd2ed663a9f9e181b5160ce97e728/testcases.docopt")))
+(deftest docopt-test
+  (is (valid? "https://raw.github.com/docopt/docopt/511d1c57b59cd2ed663a9f9e181b5160ce97e728/testcases.docopt"))
+  (is (valid? "test/docopt/extra_testcases.docopt")))

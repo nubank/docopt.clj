@@ -15,9 +15,10 @@
                 `(defmethod ~method-name ~dispatched-key ~args (do ~dispatched-body)))
               (apply array-map body))))
   
-(defmacro specialize [m]
+(defmacro specialize
   "Syntactic sugar for derive."
-  `(do ~@(mapcat (fn [[parent children]] (map (fn [child] `(derive ~child ~parent)) children)) m))) 
+  [m]
+  `(do ~@(mapcat (fn [[parent children]] (map (fn [child] `(derive ~child ~parent)) children)) m)))
 
 ;; tokenization
 
@@ -35,8 +36,8 @@ tokens are of the form [tag & groups] as captured by the corresponding regex."
   (letfn [(tokfn [[re tag] source]
                  (if (string? source)
                    (let [substrings (map s/trim (s/split (str " " (s/trim source) " ") re))
-                         new-tokens (map #(into [tag] (if (vector? %) (filter seq (rest %))))
+                         new-tokens (map #(into [tag] (when (vector? %) (filter seq (rest %))))
                                          (re-seq re source))]                           
-                     (filter seq (interleave substrings (concat (if tag new-tokens) (repeat nil)))))
+                     (filter seq (interleave substrings (concat (when tag new-tokens) (repeat nil)))))
                    [source]))]
     (reduce #(mapcat (partial tokfn %2) %1) [string] pairs)))

@@ -1,0 +1,40 @@
+r"""Usage: prog foo -- <extra-opts>...
+
+"""
+$ prog foo -- --bar
+{"<extra-opts>":["--bar"],"foo":true}
+
+
+r"""Complex command
+
+Usage:
+    prog [options] <param-x> <param-y> -- <extra>...
+    prog [options] <param-a> <param-b> <param-c> <param-d> -- <extra>...
+    prog [options] <param-x> <param-y>
+    prog [options] <param-a> <param-b> <param-c> <param-d>
+
+Options:
+    -f --foo     Foo
+    --bar <bar>  Bar
+
+"""
+
+$ prog x y --foo
+{"--bar":null,"--foo":true,"<extra>":[],"<param-a>":null,"<param-b>":null,"<param-c>":null,"<param-d>":null,"<param-x>":"x","<param-y>":"y"}
+
+$ prog a b c d
+{"--bar":null,"--foo":false,"<extra>":[],"<param-a>":"a","<param-b>":"b","<param-c>":"c","<param-d>":"d","<param-x>":null,"<param-y>":null}
+
+$ prog a b c d --foo --bar bar
+{"--bar":"bar","--foo":true,"<extra>":[],"<param-a>":"a","<param-b>":"b","<param-c>":"c","<param-d>":"d","<param-x>":null,"<param-y>":null}
+
+$ prog x y --bar bar -- extra
+{"--bar":"bar","--foo":false,"<extra>":["extra"],"<param-a>":null,"<param-b>":null,"<param-c>":null,"<param-d>":null,"<param-x>":"x","<param-y>":"y"}
+
+$ prog a b c d --foo --bar bar -- extra
+{"--bar":"bar","--foo":true,"<extra>":["extra"],"<param-a>":"a","<param-b>":"b","<param-c>":"c","<param-d>":"d","<param-x>":null,"<param-y>":null}
+
+$ prog x y -- e1 e2 e3 e4
+{"--bar":null,"--foo":false,"<extra>":["e3","e4"],"<param-a>":"x","<param-b>":"y","<param-c>":"e1","<param-d>":"e2","<param-x>":null,"<param-y>":null}
+# Wrong, this should be:
+# {"--bar":null,"--foo":false,"<extra>":["e1","e2","e3","e4"],"<param-a>":null,<param-b>":null,<param-c>":null,"<param-d>":null,<param-x>":"x","<param-y>":"y"}

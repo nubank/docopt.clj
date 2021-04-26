@@ -1,8 +1,8 @@
 (ns docopt.core
-  (:require [clojure.string      :as s]
-            [docopt.match        :as m]
+  (:require [clojure.string :as s]
+            [docopt.match :as m]
             [docopt.optionsblock :as o]
-            [docopt.usageblock   :as u]))
+            [docopt.usageblock :as u]))
 
 (defn parse
   "Parses doc string."
@@ -14,7 +14,11 @@
     (u/parse (section "usage" s/split-lines) (o/parse (section "options" osplitfn)))))
 
 (defn docopt
-  [doc args f]
-  (if-let [arg-map (-> doc parse (m/match-argv args))]
-    (f arg-map)
-    (println doc)))
+  ([doc args]
+   (docopt doc args identity println))
+  ([doc args f]
+   (docopt doc args f println))
+  ([doc args f print-fn]
+   (if-let [arg-map (-> doc parse (m/match-argv args))]
+     (f arg-map)
+     (print-fn doc))))
