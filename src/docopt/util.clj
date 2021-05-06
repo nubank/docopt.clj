@@ -5,7 +5,12 @@
 
 (defmacro err [err-clause type & err-strs]
   `(when ~err-clause
-     (throw (Exception. (str "DOCOPT ERROR " ~(case type :syntax "(syntax) " :parse "(parse) ") \| ~@err-strs)))))
+     (throw
+      (ex-info (str "DOCOPT ERROR "
+                    ~(case type :syntax "(syntax) " :parse "(parse) ")
+                    "| " ~@err-strs)
+               {:docopt.error/type    ~type
+                :docopt.error/msg     (str ~@err-strs)}))))
 
 (defmacro defmultimethods
   "Syntactic sugar for defmulti + multiple defmethods."
