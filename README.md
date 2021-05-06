@@ -1,5 +1,7 @@
 # docopt.clj
 
+[![Clojars Project](https://img.shields.io/clojars/v/dev.nubank/docopt.svg)](https://clojars.org/dev.nubank/docopt)
+
 Clojure implementation of the [docopt](http://docopt.org/) description language.
 
 Forked from [@signalpillar](https://github.com/signalpillar)'s [fork](https://github.com/signalpillar/docopt.clj) of docopt, [originally](https://github.com/docopt/docopt.clj/) by [@postamar](https://github.com/postamar).
