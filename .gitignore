@@ -14,3 +14,5 @@ pom.xml
 .lein-deps-sum
 .lein-failures
 .lein-plugins
+.nrepl-port
+.cpcache/
