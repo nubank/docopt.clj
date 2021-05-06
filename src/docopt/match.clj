@@ -19,7 +19,7 @@
 (defn parse
   "Parses the command-line arguments into a matchable state [acc remaining-option-values remaining-words]."
   [{:keys [acc shorts-re longs-re]} argv]
-  (let [[head _ & tail] (partition-by (partial = "--") argv)
+  (let [[head & tail]   (partition-by (partial = "--") argv)
         options         (remove string? (keys acc))
         tokens          (mapcat #(expand % options) (tokenize (s/join " " head) 
                                                               (concat (map vector longs-re  (repeat :long-option))
@@ -71,15 +71,9 @@
      (= [] value) (if (vector? default-value) default-value [default-value])
      :else        value)])
 
-(defn- biggest-match
-  [matches]
-  (letfn [(filled-vals-count [match]
-            (->> match first vals (remove nil?) count))]
-    (->> matches (sort-by filled-vals-count >) first)))
-
-(defn match-argv 
+(defn match-argv
   "Match command-line arguments with usage patterns."
   [docmap argv]
   (if-let [state (parse docmap argv)]
-    (if-let [[match] (biggest-match (filter #(every? empty? (cons (% 2) (vals (% 1)))) (matches #{state} (:tree docmap))))]
+    (if-let [[match] (first (filter #(every? empty? (cons (% 2) (vals (% 1)))) (matches #{state} (:tree docmap))))]
       (into (sorted-map) (map #(if (string? (key %)) % (option-value %)) match)))))

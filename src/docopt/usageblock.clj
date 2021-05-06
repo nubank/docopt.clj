@@ -48,8 +48,7 @@
                      [#"(\)|\])"                           ::end-group]]
                     (map vector longs-re            (repeat :long-option)) 
                     (map vector shorts-re           (repeat :short-options))
-                    [[(re-tok "--")                         :args-separator]
-                     [(re-tok "--([^= ]+)=(<[^<>]*>|\\S+)") :long-option]
+                    [[(re-tok "--([^= ]+)=(<[^<>]*>|\\S+)") :long-option]
                      [(re-tok "--(\\S+)")                   :long-option]
                      [(re-tok "-(?!-)(\\S+)")               :short-options]
                      [(re-tok re-arg-str)                  ::argument]
@@ -70,7 +69,6 @@
   [[tag name arg :as token] lnum options] 
   tag
   ::token         [(into [tag lnum] (rest token))]
-  :args-separator [] ;; ignore
   :long-option    [(find-option :long name arg lnum options)]
   :short-options  (letfn [(new-short [arg c] (find-option :short (str c) arg lnum options))]
                     (conj (into [] (map (partial new-short nil) (butlast name)))
