@@ -6,6 +6,7 @@
 /classes
 /checkouts
 pom.xml
+pom.xml.asc
 .project
 .lein-repl-history
 .classpath

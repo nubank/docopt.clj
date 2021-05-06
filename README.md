@@ -13,7 +13,7 @@ In order to add `docopt.clj` to the classpath, you can either
 - Use an environment variable
   ``` bash
   cd babashka
-  export BABASHKA_CLASSPATH=$(clojure -Spath -Sdeps '{:deps {nubank/docopt {:git/url "https://github.com/nubank/docopt.clj" :sha "0c5b1c7645901affcda115fc280744f5f8dc802a"}}}')
+  export BABASHKA_CLASSPATH=$(clojure -Spath -Sdeps '{:deps {dev.nubank/docopt {:mvn/version "0.6.1-fix2"}}}')
   ./naval_fate_env.clj
   ```
 
