@@ -53,9 +53,7 @@ Save the following script as `test-script` and make it executable with `chmod +x
 #!/bin/sh
 #_(
   DEPS='
-   {:deps {docopt
-             {:git/url "https://github.com/nubank/docopt.clj"
-               :sha    "5191b7ef3ef3f80b4e19c1cd4800333c7ad2513f"}}}
+   {:deps {dev.nubank/docopt {:mvn/version "0.6.1-fix2"}}}
    '
 
   OPTS='
