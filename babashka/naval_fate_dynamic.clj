@@ -3,8 +3,8 @@
 (require '[babashka.classpath :refer [add-classpath]]
          '[clojure.java.shell :refer [sh]])
 
-(def docopt-dep '{:deps {docopt {:git/url "https://github.com/nubank/docopt.clj"
-                                 :sha     "12b997548381b607ddb246e4f4c54c01906e70aa"}}})
+(def docopt-dep '{:deps {nubank/docopt {:git/url "https://github.com/nubank/docopt.clj"
+                                        :sha     "0c5b1c7645901affcda115fc280744f5f8dc802a"}}})
 (def cp (:out (sh "clojure" "-Spath" "-Sdeps" (str docopt-dep))))
 (add-classpath cp)
 

@@ -10,7 +10,7 @@
 (defn partial-long-re-str 
   "Creates partial match pattern for long option name."
   [names re-str [c & more-c]]
-  (let [[match & more-matches :as matches] (filter #(= c (first %)) names)]
+  (let [[_match & more-matches :as matches] (filter #(= c (first %)) names)]
     (if (or (empty? more-matches) (empty? more-c))
       (apply str re-str c (interleave more-c (repeat \?)))
       (recur (filter seq (map rest matches)) (str re-str c) more-c))))
@@ -20,7 +20,7 @@
   [long-options pattern-parsing?]
   (let [longs (map :long long-options)]
     (into [] (map #(re-tok "--(" (if pattern-parsing? %1 (partial-long-re-str longs "" %1)) ")" %2)
-                  longs (map #(if (:takes-arg %) "(?:=| )(\\S+)") long-options)))))
+                  longs (map #(when (:takes-arg %) "(?:=| )(\\S+)") long-options)))))
 
 (defn compile-short-options-re  
   "Generates regexes to unambiguously capture short options, for usage pattern parsing or for argv matching."
@@ -48,8 +48,7 @@
                      [#"(\)|\])"                           ::end-group]]
                     (map vector longs-re            (repeat :long-option)) 
                     (map vector shorts-re           (repeat :short-options))
-                    [[(re-tok "--")                         :args-separator]
-                     [(re-tok "--([^= ]+)=(<[^<>]*>|\\S+)") :long-option]
+                    [[(re-tok "--([^= ]+)=(<[^<>]*>|\\S+)") :long-option]
                      [(re-tok "--(\\S+)")                   :long-option]
                      [(re-tok "-(?!-)(\\S+)")               :short-options]
                      [(re-tok re-arg-str)                  ::argument]
@@ -58,11 +57,11 @@
 (defn find-option
   "Returns the corresponding option object in the 'options' sequence, or generates a new one."
   [name-key name arg lnum options]
-  (let [takes-arg (not (empty? arg))
+  (let [takes-arg (boolean (seq arg))
         [option] (filter #(= name (% name-key)) options)]
     (err (and option (not= takes-arg (:takes-arg option))) :parse
          "Usage line " lnum ": " (if (= name-key :short) "short" "long") " option '" (option name-key)
-         "'already defined with" (when takes-arg "out") " argument.")
+         "' already defined with" (when takes-arg "out") " argument.")
     [::option lnum (or option {name-key name :takes-arg takes-arg})]))
 
 (defmultimethods expand 
@@ -70,7 +69,6 @@
   [[tag name arg :as token] lnum options] 
   tag
   ::token         [(into [tag lnum] (rest token))]
-  :args-separator [] ;; ignore
   :long-option    [(find-option :long name arg lnum options)]
   :short-options  (letfn [(new-short [arg c] (find-option :short (str c) arg lnum options))]
                     (conj (into [] (map (partial new-short nil) (butlast name)))
@@ -93,7 +91,7 @@
   (let [tokens              (tokenize-pattern-lines lines options-block-options)
         usage-block-options (reduce conj #{} (map #(% 2) (filter #(= ::option (% 0)) tokens)))
         options-diff        (remove usage-block-options options-block-options)]
-    (mapcat (fn [[tag lnum & more :as token]]
+    (mapcat (fn [[tag lnum & _ :as token]]
               (if (= tag ::options)
                 (concat [[::group lnum "["]] (map #(vector ::option lnum %) options-diff) [[::end-group lnum "]"]])
                 [token]))
@@ -151,7 +149,7 @@
 (defn syntax-tree
   "Generates syntax tree from token sequence." 
   [tokens]
-  (let [[tree & more :as stack] (reduce make-node [[[]]] (concat [[::group nil "("]] tokens [[::end-group nil ")"]]))]
+  (let [[_tree & more :as stack] (reduce make-node [[[]]] (concat [[::group nil "("]] tokens [[::end-group nil ")"]]))]
     (err (seq more) :parse "Missing ')' or ']'.")
     (or (peek-last stack) [])))
 

@@ -1,5 +1,5 @@
 (ns docopt.core-test
-  (:require [clojure.data.json :as json]
+  (:require [cheshire.core :as json]
             [clojure.string :as s]
             [clojure.test :refer :all]
             [docopt.core :as d]
@@ -24,7 +24,7 @@
   [path] 
   (into [] (mapcat (fn [[_ doc tests]]
                    (map (fn [[_ args result]]
-                          [doc (into [] (filter seq (s/split (or args "") #"\s+"))) (json/read-str result)])
+                          [doc (into [] (filter seq (s/split (or args "") #"\s+"))) (json/parse-string result)])
                         (re-seq test-block-regex tests)))
                  (re-seq doc-block-regex (s/replace (slurp path) #"#.*" "")))))
 
@@ -37,8 +37,10 @@
       (str "\n" (s/trim-newline doc) "\n" docinfo)
       (let [result (or (m/match-argv docinfo in) "user-error")]
         (when (not= result out)
-          (str "\n" (s/trim-newline doc) "\n$ prog " (s/join " " in) 
-               "\nexpected: " (json/write-str out) "\nobtained: " (json/write-str result) "\n\n"))))))
+          (str "\n" (s/trim-newline doc)
+               "\n$ prog " (s/join " " in)
+               "\nexpected: " (json/generate-string out)
+               "\nobtained: " (json/generate-string result) "\n\n"))))))
 
 (defn valid?
   "Validates all test cases found in the file named 'test-cases-file-name'."
