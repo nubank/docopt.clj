@@ -55,3 +55,6 @@ $ prog a b c d --foo --bar bar -- extra
 
 $ prog x y -- e1 e2 e3 e4
 {"--bar": null, "--foo": false, "<param-x>": "x", "<param-y>": "y", "--": true, "<extra>": ["e1", "e2", "e3", "e4"], "<param-a>": null, "<param-b>": null, "<param-c>": null, "<param-d>": null}
+
+$ prog x y --bar "bar in space"
+{"--":false,"--bar":"bar in space","--foo":false,"<extra>":[],"<param-a>":"x","<param-b>":"y","<param-c>":"in","<param-d>":"space\"","<param-x>":null,"<param-y>":null}
