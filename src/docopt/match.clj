@@ -43,7 +43,7 @@
   :short-options (let [options (map (fn [c] (first (filter #(= (str c) (:short %)) options))) name)]
                    (concat (map array-map (butlast options) (repeat nil)) [{(last options) arg}])))
 
-(defn- string->seps
+(defn- strings->string-with-seps
   "Convert some strings to a string separator, so we don't lose args after
   parsing."
   [head]
@@ -56,16 +56,25 @@
            s))
        head))
 
-(defn- seps->string
+(defn- string-with-seps->string
+  [s]
+  (-> s
+      (s/replace (re-pattern space-sep) " ")
+      (s/replace (re-pattern newline-sep) "\n")
+      (s/replace (re-pattern tab-sep) "\t")))
+
+(defn- strings-with-seps->strings
   "Convert separators back to string."
   [head]
-  (map (fn [s]
-         (if (string? s)
-           (-> s
-               (s/replace (re-pattern space-sep) " ")
-               (s/replace (re-pattern newline-sep) "\n")
-               (s/replace (re-pattern tab-sep) "\t"))
-           s))
+  (map (fn [v]
+         (cond
+           (string? v) (string-with-seps->string v)
+           (map? v)    (into {}
+                             (map
+                              (fn [[k v]]
+                                [k (some-> v string-with-seps->string)])
+                              v))
+           :else       v))
        head))
 
 (defn parse
@@ -73,11 +82,11 @@
   [{:keys [acc shorts-re longs-re]} argv]
   (let [[head & tail]   (partition-by (partial = "--") argv)
         options         (remove string? (keys acc))
-        tokens          (mapcat #(expand % options) (tokenize (s/join " " (string->seps head))
+        tokens          (mapcat #(expand % options) (tokenize (s/join " " (strings->string-with-seps head))
                                                               (concat (map vector longs-re  (repeat :long-option))
                                                                       (map vector shorts-re (repeat :short-options))
                                                                       [[(re-tok "-\\S+|(\\S+)")     :word]])))
-        tokens'         (seps->string tokens)]
+        tokens'         (strings-with-seps->strings tokens)]
     (when (not-any? nil? tokens')
       [acc
        (apply merge-with conj (zipmap options (repeat [])) (filter map? tokens'))

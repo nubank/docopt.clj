@@ -67,6 +67,10 @@
 
   ;; Adding this test here since it seems testcases file doesn't support quoted args
   (testing "should parse quoted args correctly"
+    (is (= {"-f" "a b"}
+           (d/docopt "usage: prog [options]\noptions: -f <foo>" ["-f" "a b"])))
+    (is (= {"--foo" "a\nb"}
+           (d/docopt "usage: prog [options]\noptions: --foo <foo>" ["--foo" "a\nb"])))
     (is (= {"<foo>" "a b  c "}
            (d/docopt "usage: prog <foo>" ["a b  c "])))
     (is (= {"<foo>" "a\tb\nc"}
