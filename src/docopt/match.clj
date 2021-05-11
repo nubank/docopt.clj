@@ -3,6 +3,15 @@
             [clojure.string :as s]
             [docopt.util :refer [defmultimethods re-tok tokenize]]))
 
+(def ^:dynamic space-sep
+  "Workaround issue with spaces by converting them to another character.
+
+  See https://github.com/nubank/docopt.clj/pull/5 for details.
+
+  If you have issues with \u00A0, use `binding` to select another
+  separator character."
+  "\u00A0")
+
 ;; parse command line
 
 (defmultimethods expand 
@@ -15,10 +24,6 @@
                    [{(first (concat (filter exactfn options) (filter partialfn options))) arg}])
   :short-options (let [options (map (fn [c] (first (filter #(= (str c) (:short %)) options))) name)]
                    (concat (map array-map (butlast options) (repeat nil)) [{(last options) arg}])))
-
-(def ^:private space-sep
-  "Non-breaking space"
-  "\u00A0")
 
 (defn- spaces->spaces-seps
   "Convert spaces to a space separator, so we don't lose args after parsing."
