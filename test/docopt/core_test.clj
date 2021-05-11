@@ -56,6 +56,18 @@
   (is (valid? "https://raw.github.com/docopt/docopt/511d1c57b59cd2ed663a9f9e181b5160ce97e728/testcases.docopt"))
   (is (valid? "test/docopt/extra_testcases.docopt"))
 
+  (testing "2-arity version"
+    (is (= {"<foo>" "a"}
+           (d/docopt "usage: prog <foo>" ["a"]))))
+
+  (testing "3-arity version"
+    (is (= "a"
+           (d/docopt "usage: prog <foo>" ["a"] #(get % "<foo>")))))
+
+  (testing "4-arity version"
+    (is (= "usage: prog <foo>"
+           (d/docopt "usage: prog <foo>" [] identity identity))))
+
   ;; Adding this test here since it seems testcases file doesn't support quoted args
   (testing "should parse quoted args correctly"
     (is (= {"<foo>" "a b"}
