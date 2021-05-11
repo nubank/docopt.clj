@@ -71,9 +71,9 @@
            (d/docopt "usage: prog <foo>" ["a b"])))
     (is (= {"<foo>" "a   b c"}
            (d/docopt "usage: prog <foo>" ["a   b c"])))
-    (binding [docopt.match/space-sep "\u0000"]
-      (is (= {"<foo>" "a b    c"}
-             (d/docopt "usage: prog <foo>" ["a b    c"]))))))
+    (binding [docopt.match/space-sep "FOO"]
+      (is (= {"<foo>" "a b"}
+             (d/docopt "usage: prog <foo>" ["aFOOb"]))))))
 
 (deftest language-agnostic-test
   (is (valid? "https://raw.github.com/docopt/docopt/511d1c57b59cd2ed663a9f9e181b5160ce97e728/testcases.docopt"))

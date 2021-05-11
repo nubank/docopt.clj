@@ -8,9 +8,9 @@
 
   See https://github.com/nubank/docopt.clj/pull/5 for details.
 
-  If you have issues with \u00A0, use `binding` to select another
-  separator character."
-  "\u00A0")
+  If you have issues with this, use `binding` to select another separator
+  string."
+  "__DOCOPT_SPACE_SEP__")
 
 ;; parse command line
 
