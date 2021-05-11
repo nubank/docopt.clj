@@ -1,4 +1,4 @@
-(defproject dev.nubank/docopt "0.6.1-fix3"
+(defproject dev.nubank/docopt "0.6.1-fix4"
   :description "docopt creates beautiful command-line interfaces - clojure port"
   :url "http://docopt.org"
   :license {:name "MIT" :url "https://github.com/docopt/docopt.clj/blob/master/LICENSE"}
