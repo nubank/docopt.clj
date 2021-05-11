@@ -3,6 +3,15 @@
             [clojure.string :as s]
             [docopt.util :refer [defmultimethods re-tok tokenize]]))
 
+(def ^:dynamic space-sep
+  "Workaround issue with spaces by converting them to another character.
+
+  See https://github.com/nubank/docopt.clj/pull/5 for details.
+
+  If you have issues with \u00A0, use `binding` to select another
+  separator character."
+  "\u00A0")
+
 ;; parse command line
 
 (defmultimethods expand 
@@ -16,19 +25,38 @@
   :short-options (let [options (map (fn [c] (first (filter #(= (str c) (:short %)) options))) name)]
                    (concat (map array-map (butlast options) (repeat nil)) [{(last options) arg}])))
 
+(defn- spaces->spaces-seps
+  "Convert spaces to a space separator, so we don't lose args after parsing."
+  [head]
+  (map (fn [s]
+         (if (string? s)
+           (s/replace s #" " space-sep)
+           s))
+       head))
+
+(defn- spaces-seps->spaces
+  "Convert spaces to a space separator, so we don't lose args after parsing."
+  [head]
+  (map (fn [s]
+         (if (string? s)
+           (s/replace s (re-pattern space-sep) " ")
+           s))
+       head))
+
 (defn parse
   "Parses the command-line arguments into a matchable state [acc remaining-option-values remaining-words]."
   [{:keys [acc shorts-re longs-re]} argv]
   (let [[head & tail]   (partition-by (partial = "--") argv)
         options         (remove string? (keys acc))
-        tokens          (mapcat #(expand % options) (tokenize (s/join " " head) 
+        tokens          (mapcat #(expand % options) (tokenize (s/join " " (spaces->spaces-seps head))
                                                               (concat (map vector longs-re  (repeat :long-option))
                                                                       (map vector shorts-re (repeat :short-options))
-                                                                      [[(re-tok "-\\S+|(\\S+)")     :word]])))]
-    (when (not-any? nil? tokens)
+                                                                      [[(re-tok "-\\S+|(\\S+)")     :word]])))
+        tokens'         (spaces-seps->spaces tokens)]
+    (when (not-any? nil? tokens')
       [acc
-       (apply merge-with conj (zipmap options (repeat [])) (filter map? tokens))
-       (apply concat (filter string? tokens) tail)])))
+       (apply merge-with conj (zipmap options (repeat [])) (filter map? tokens'))
+       (apply concat (filter string? tokens') tail)])))
 
 ;; walk pattern tree
 
