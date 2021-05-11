@@ -67,13 +67,15 @@
 
   ;; Adding this test here since it seems testcases file doesn't support quoted args
   (testing "should parse quoted args correctly"
-    (is (= {"<foo>" "a b"}
-           (d/docopt "usage: prog <foo>" ["a b"])))
-    (is (= {"<foo>" "a   b c"}
-           (d/docopt "usage: prog <foo>" ["a   b c"])))
-    (binding [docopt.match/space-sep "FOO"]
-      (is (= {"<foo>" "a b"}
-             (d/docopt "usage: prog <foo>" ["aFOOb"]))))))
+    (is (= {"<foo>" "a b  c "}
+           (d/docopt "usage: prog <foo>" ["a b  c "])))
+    (is (= {"<foo>" "a\tb\nc"}
+           (d/docopt "usage: prog <foo>" ["a\tb\nc"])))
+    (binding [docopt.match/space-sep "FOO"
+              docopt.match/newline-sep "BAR"
+              docopt.match/tab-sep "QUX"]
+      (is (= {"<foo>" "a b\nc\td"}
+             (d/docopt "usage: prog <foo>" ["aFOObBARcQUXd"]))))))
 
 (deftest language-agnostic-test
   (is (valid? "https://raw.github.com/docopt/docopt/511d1c57b59cd2ed663a9f9e181b5160ce97e728/testcases.docopt"))

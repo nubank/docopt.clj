@@ -12,6 +12,24 @@
   string."
   "__DOCOPT_SPACE_SEP__")
 
+(def ^:dynamic newline-sep
+  "Workaround issue with newlines by converting them to another character.
+
+  See https://github.com/nubank/docopt.clj/pull/5 for details.
+
+  If you have issues with this, use `binding` to select another separator
+  string."
+  "__DOCOPT_NEWLINE_SEP__")
+
+(def ^:dynamic tab-sep
+  "Workaround issue with tabs by converting them to another character.
+
+  See https://github.com/nubank/docopt.clj/pull/5 for details.
+
+  If you have issues with this, use `binding` to select another separator
+  string."
+  "__DOCOPT_TAB_SEP__")
+
 ;; parse command line
 
 (defmultimethods expand 
@@ -25,21 +43,28 @@
   :short-options (let [options (map (fn [c] (first (filter #(= (str c) (:short %)) options))) name)]
                    (concat (map array-map (butlast options) (repeat nil)) [{(last options) arg}])))
 
-(defn- spaces->spaces-seps
-  "Convert spaces to a space separator, so we don't lose args after parsing."
+(defn- string->seps
+  "Convert some strings to a string separator, so we don't lose args after
+  parsing."
   [head]
   (map (fn [s]
          (if (string? s)
-           (s/replace s #" " space-sep)
+           (-> s
+               (s/replace #" " space-sep)
+               (s/replace #"\n" newline-sep)
+               (s/replace #"\t" tab-sep))
            s))
        head))
 
-(defn- spaces-seps->spaces
-  "Convert spaces to a space separator, so we don't lose args after parsing."
+(defn- seps->string
+  "Convert separators back to string."
   [head]
   (map (fn [s]
          (if (string? s)
-           (s/replace s (re-pattern space-sep) " ")
+           (-> s
+               (s/replace (re-pattern space-sep) " ")
+               (s/replace (re-pattern newline-sep) "\n")
+               (s/replace (re-pattern tab-sep) "\t"))
            s))
        head))
 
@@ -48,11 +73,11 @@
   [{:keys [acc shorts-re longs-re]} argv]
   (let [[head & tail]   (partition-by (partial = "--") argv)
         options         (remove string? (keys acc))
-        tokens          (mapcat #(expand % options) (tokenize (s/join " " (spaces->spaces-seps head))
+        tokens          (mapcat #(expand % options) (tokenize (s/join " " (string->seps head))
                                                               (concat (map vector longs-re  (repeat :long-option))
                                                                       (map vector shorts-re (repeat :short-options))
                                                                       [[(re-tok "-\\S+|(\\S+)")     :word]])))
-        tokens'         (spaces-seps->spaces tokens)]
+        tokens'         (seps->string tokens)]
     (when (not-any? nil? tokens')
       [acc
        (apply merge-with conj (zipmap options (repeat [])) (filter map? tokens'))
