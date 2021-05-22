@@ -2,6 +2,6 @@
   :description "docopt creates beautiful command-line interfaces - clojure port"
   :url "http://docopt.org"
   :license {:name "MIT" :url "https://github.com/docopt/docopt.clj/blob/master/LICENSE"}
-  :dependencies [[org.clojure/clojure "1.10.3"]]
+  :dependencies [[org.clojure/clojure "1.8.0"]]
   :profiles {:dev {:dependencies [[cheshire "5.10.0"]]}}
   :aot :all)
