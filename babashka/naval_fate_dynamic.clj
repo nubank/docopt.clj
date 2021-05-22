@@ -3,7 +3,7 @@
 (require '[babashka.classpath :refer [add-classpath]]
          '[clojure.java.shell :refer [sh]])
 
-(def docopt-dep '{:deps {dev.nubank/docopt {:mvn/version "0.6.1-fix5"}}})
+(def docopt-dep '{:deps {dev.nubank/docopt {:mvn/version "0.6.1-fix6"}}})
 (def cp (:out (sh "clojure" "-Spath" "-Sdeps" (str docopt-dep))))
 (add-classpath cp)
 
