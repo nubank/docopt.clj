@@ -3,32 +3,18 @@
             [clojure.string :as s]
             [docopt.util :refer [defmultimethods re-tok tokenize]]))
 
-(def ^:dynamic space-sep
-  "Workaround issue with spaces by converting them to another character.
+(def ^:dynamic *sep-table*
+  "Workaround issue with some characters by converting them to a separator
+  character.
 
   See https://github.com/nubank/docopt.clj/pull/5 for details.
 
   If you have issues with this, use `binding` to select another separator
   string."
-  "__DOCOPT_SPACE_SEP__")
-
-(def ^:dynamic newline-sep
-  "Workaround issue with newlines by converting them to another character.
-
-  See https://github.com/nubank/docopt.clj/pull/5 for details.
-
-  If you have issues with this, use `binding` to select another separator
-  string."
-  "__DOCOPT_NEWLINE_SEP__")
-
-(def ^:dynamic tab-sep
-  "Workaround issue with tabs by converting them to another character.
-
-  See https://github.com/nubank/docopt.clj/pull/5 for details.
-
-  If you have issues with this, use `binding` to select another separator
-  string."
-  "__DOCOPT_TAB_SEP__")
+  {\          "__DOCOPT_SPACE_SEP__"
+   \newline   "__DOCOPT_NEWLINE_SEP__"
+   \tab       "__DOCOPT_TAB_SEP__"
+   \backspace "__DOCOPT_BACKSPACE_SEP__"})
 
 ;; parse command line
 
@@ -43,25 +29,21 @@
   :short-options (let [options (map (fn [c] (first (filter #(= (str c) (:short %)) options))) name)]
                    (concat (map array-map (butlast options) (repeat nil)) [{(last options) arg}])))
 
-(defn- strings->string-with-seps
+(defn- strings->strings-with-seps
   "Convert some strings to a string separator, so we don't lose args after
   parsing."
   [head]
-  (map (fn [s]
-         (if (string? s)
-           (-> s
-               (s/replace #" " space-sep)
-               (s/replace #"\n" newline-sep)
-               (s/replace #"\t" tab-sep))
-           s))
+  (map #(if (string? %)
+          (s/escape % *sep-table*)
+          %)
        head))
 
 (defn- string-with-seps->string
   [s]
-  (-> s
-      (s/replace (re-pattern space-sep) " ")
-      (s/replace (re-pattern newline-sep) "\n")
-      (s/replace (re-pattern tab-sep) "\t")))
+  (reduce (fn [s [ch sep]]
+            (s/replace s (re-pattern sep) (str ch)))
+          s
+          *sep-table*))
 
 (defn- strings-with-seps->strings
   "Convert separators back to string."
@@ -82,7 +64,7 @@
   [{:keys [acc shorts-re longs-re]} argv]
   (let [[head & tail]   (partition-by (partial = "--") argv)
         options         (remove string? (keys acc))
-        tokens          (mapcat #(expand % options) (tokenize (s/join " " (strings->string-with-seps head))
+        tokens          (mapcat #(expand % options) (tokenize (s/join " " (strings->strings-with-seps head))
                                                               (concat (map vector longs-re  (repeat :long-option))
                                                                       (map vector shorts-re (repeat :short-options))
                                                                       [[(re-tok "-\\S+|(\\S+)")     :word]])))

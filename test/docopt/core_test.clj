@@ -75,11 +75,12 @@
            (d/docopt "usage: prog <foo>" ["a b  c "])))
     (is (= {"<foo>" "a\tb\nc"}
            (d/docopt "usage: prog <foo>" ["a\tb\nc"])))
-    (binding [docopt.match/space-sep "FOO"
-              docopt.match/newline-sep "BAR"
-              docopt.match/tab-sep "QUX"]
-      (is (= {"<foo>" "a b\nc\td"}
-             (d/docopt "usage: prog <foo>" ["aFOObBARcQUXd"]))))))
+    (binding [docopt.match/*sep-table* {\          "FOO"
+                                        \newline   "BAR"
+                                        \tab       "QUX"
+                                        \backspace "QUZ"}]
+      (is (= {"<foo>" "a b\nc\td\b"}
+             (d/docopt "usage: prog <foo>" ["aFOObBARcQUXdQUZ"]))))))
 
 (deftest language-agnostic-test
   (is (valid? "https://raw.github.com/docopt/docopt/511d1c57b59cd2ed663a9f9e181b5160ce97e728/testcases.docopt"))
