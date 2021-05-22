@@ -121,7 +121,7 @@
     (first
      ;; Prioritize matches with `--` if the argv includes a `--`
      (or (and (some #{"--"} argv)
-              (filter #(-> % first (get "--")) matches))
+              (seq (filter #(-> % first (get "--")) matches)))
          matches))))
 
 (defn- possible-matches
