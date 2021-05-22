@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1-fix7
+- While parsing argvs with `--`, returns all matches if no matches with
+  `--` is found
+
 ## 0.6.1-fix6
 - Use `clojure.string/escape` instead of `clojure.string/replace` to convert
   the characters to placeholders. It still uses `clojure.string/replace` to
