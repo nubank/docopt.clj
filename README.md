@@ -1,6 +1,7 @@
 # docopt.clj
 
 [![Clojars Project](https://img.shields.io/clojars/v/dev.nubank/docopt.svg)](https://clojars.org/dev.nubank/docopt)
+[![bb compatible](https://raw.githubusercontent.com/babashka/babashka/master/logo/badge.svg)](https://babashka.org)
 
 Clojure implementation of the [docopt](http://docopt.org/) description language.
 
