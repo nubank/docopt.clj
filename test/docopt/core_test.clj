@@ -83,5 +83,5 @@
              (d/docopt "usage: prog <foo>" ["aFOObBARcQUXdQUZ"]))))))
 
 (deftest language-agnostic-test
-  (is (valid? "https://raw.github.com/docopt/docopt/511d1c57b59cd2ed663a9f9e181b5160ce97e728/testcases.docopt"))
+  (is (valid? "https://raw.githubusercontent.com/docopt/docopt/511d1c57b59cd2ed663a9f9e181b5160ce97e728/testcases.docopt"))
   (is (valid? "test/docopt/extra_testcases.docopt")))
